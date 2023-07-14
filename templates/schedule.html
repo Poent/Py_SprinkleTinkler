@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>The Sprinkle Tinkler - Scheduling</title>
+
+    <!-- External styles and scripts -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    
+    <style>
+        /* Add this style */
+        .dark-title {
+            background-color: #343a40 !important; /* Same as bg-dark */
+            color: #fff !important; /* Same as text-white */
+        }
+
+        .edit {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-3 mb-2 bg-light text-dark">
+    <h1 id="page-title" class="text-center bg-white text-dark p-3 mb-2">The Sprinkle Tinkler - Scheduling</h1>
+    <div class="d-flex justify-content-between">
+        <button id="dark-mode-toggle" class="btn btn-info mb-3">Toggle Dark Mode</button>
+        <button class="add-schedule btn btn-success mb-3">Add Schedule</button>
+    </div>
+    <script>
+        $('#dark-mode-toggle').click(function() {
+            $('body').toggleClass('bg-dark text-white');
+            $('#page-title').toggleClass('dark-title'); /* Use the new class here */
+            $('table').toggleClass('table-dark');
+            $('.btn').toggleClass('btn-light btn-dark');
+            const darkMode = $('body').hasClass('bg-dark');
+            localStorage.setItem('dark-mode', darkMode);
+        });
+
+        if(localStorage.getItem('dark-mode') === 'true') {
+            $('body').addClass('bg-dark text-white');
+            $('#page-title').addClass('dark-title'); /* And here */
+            $('table').addClass('table-dark');
+            $('.btn').addClass('btn-light');
+        }
+    </script>
+    <table id="schedule-table" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Sprinkler IDs</th>
+                <th>Start Time</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Existing schedules would be added here -->
+        </tbody>
+    </table>
+    <button onclick="window.location.href='/'" class="btn btn-primary">Back to Main Page</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="sprinklerModal" tabindex="-1" role="dialog" aria-labelledby="sprinklerModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sprinklerModalLabel">Select Sprinklers</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <select multiple="multiple" class="select-sprinklers form-control" style="width: 100%;">
+                        <!-- Sprinkler options would be loaded here -->
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary save-sprinklers">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store current editing row and cell
+        let currentRow, currentCell;
+
+        let currentTime = new Date();
+        let hours = currentTime.getHours();
+        let minutes = currentTime.getMinutes();
+        let seconds = currentTime.getSeconds();
+
+        // Padding single digit numbers with a leading zero
+        hours = (hours < 10 ? "0" : "") + hours;
+        minutes = (minutes < 10 ? "0" : "") + minutes;
+        seconds = (seconds < 10 ? "0" : "") + seconds;
+
+        let timeString = hours + ":" + minutes + ":" + seconds;
+
+
+        $(document).ready(function() {
+            // Load existing schedules
+            $.getJSON('/schedules', function(data) {
+                $.each(data, function(key, val) {
+                    addScheduleToTable(val);
+                });
+            });
+
+            // Load sprinkler options
+            $.getJSON('/sprinklers', function(data) {
+                $.each(data, function(key, val) {
+                    $('.select-sprinklers').append(new Option(val.name, val.id));
+                });
+                $('.select-sprinklers').select2();
+            });
+
+            // Handle add schedule button click
+            $('.add-schedule').click(function() {
+                const name = prompt("Enter a Name for the new schedule:");
+                if (name !== null) {
+                    $.post('/schedules', JSON.stringify({ 'name': name }), function(data) {
+                        addScheduleToTable(data);
+                    });
+                }
+            });
+
+            // Handle save sprinklers button click
+            $('.save-sprinklers').click(function() {
+                currentCell.text($('.select-sprinklers').val().join(', '));
+                $('#sprinklerModal').modal('hide');
+            });
+        });
+
+        // Adds a schedule to the table in the DOM
+        function addScheduleToTable(schedule) {
+            const row = $('<tr>');
+            row.append('<td class="schedule-name"><span class="display">' + schedule.name + '</span><input type="text" class="edit" value="' + schedule.name + '"></td>');
+            row.append('<td class="schedule-description"><span class="display">' + (schedule.description || '') + '</span><input type="text" class="edit" value="' + (schedule.description || '') + '"></td>');
+            row.append('<td class="schedule-sprinklers">' + schedule.watering_tasks.map(task => task.sprinkler_id).join(', ') + '</td>');
+            row.append('<td class="schedule-start-time">' + schedule.start_time + '</td>');
+            row.append('<td class="schedule-type"><span class="display">' + (schedule.frequency || '') + '</span><select class="type-select"><option value="Every N Days">Every N Days</option><option value="Days of the Week">Days of the Week</option></select></td>');
+            row.append(`
+                <td>
+                    <button class="update-schedule">Update</button>
+                    <button class="delete-schedule">Delete</button>
+                </td>
+            `);
+
+            // Inline editing for name and description
+            row.find('.schedule-name, .schedule-description').dblclick(function() {
+                const $cell = $(this);
+                $cell.find('.display').hide();
+                $cell.find('.edit').show().focus();
+            });
+
+            row.find('.schedule-name input, .schedule-description input').blur(function() {
+                const $cell = $(this).closest('td');
+                $cell.find('.display').text($(this).val()).show();
+                $cell.find('.edit').hide();
+            });
+
+            // Show modal for selecting sprinklers
+            row.find('.schedule-sprinklers').click(function() {
+                currentRow = row;
+                currentCell = $(this);
+                $('.select-sprinklers').val(currentCell.text().split(', ')).trigger('change');
+                $('#sprinklerModal').modal('show');
+            });
+
+            // Show dropdown for schedule type
+            row.find('.schedule-type').dblclick(function() {
+                const $cell = $(this);
+                $cell.find('.display').hide();
+                $cell.find('.type-select').show().focus();
+            });
+
+            row.find('.schedule-type select').change(function() {
+                const $cell = $(this).closest('td');
+                $cell.find('.display').text($(this).val()).show();
+                $cell.find('.type-select').hide();
+            });
+
+            // Handle update button click
+            row.find('.update-schedule').click(function() {
+                const name = row.find('.schedule-name .display').text();
+                const description = row.find('.schedule-description .display').text();
+                const sprinklers = row.find('.schedule-sprinklers').text().split(', ');
+                const startTime = row.find('.schedule-start-time').text();
+                const type = row.find('.schedule-type .display').text();
+
+                // Start with an empty list
+                let watering_tasks = [];
+
+                // Get all watering tasks from the server
+                $.getJSON('/watering_tasks', function(data) {
+                    // Filter the tasks for the sprinklers in this schedule
+                    const tasks = data.filter(task => sprinklers.includes(String(task.sprinkler_id)));
+                    
+                    // Build the list of watering tasks
+                    for (let task of tasks) {
+                        // Create a new watering task object
+                        let watering_task = {
+                            'id': task.id,  // ID of the existing task
+                            'duration': task.duration,  // Duration from the server
+                            'sprinkler_id': task.sprinkler_id  // Sprinkler ID from the server
+                        };
+                
+                        // Add the new watering task to the list
+                        watering_tasks.push(watering_task);
+                    }
+
+                    // Now, watering_tasks is defined and you can use it in your AJAX request
+                    $.ajax({
+                        url: '/schedules/' + schedule.id,
+                        type: 'PUT',
+                        contentType: 'application/json',  // Needed for Flask to interpret the request data as JSON
+                        data: JSON.stringify({
+                            'name': name, 
+                            'description': description, 
+                            'start_time': timeString, 
+                            'frequency': type,
+                            'watering_tasks': watering_tasks  // This should be a list of watering task objects
+                        }),
+                        success: function(updatedSchedule) {
+                            alert('Schedule updated successfully!');
+                        }
+                    });
+                });
+            });
+
+
+            // Handle delete button click
+            row.find('.delete-schedule').click(function() {
+                if (confirm("Are you sure you want to delete this schedule?")) {
+                    $.ajax({
+                        url: '/schedules/' + schedule.id,
+                        type: 'DELETE',
+                        success: function() {
+                            row.remove();
+                        }
+                    });
+                }
+            });
+
+            $('#schedule-table tbody').append(row);
+        }
+    </script>
+</body>
+</html>

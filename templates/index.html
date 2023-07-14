@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Sprinkle Tinkler</title>
+    <style>
+        body {
+            background-color: skyblue;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            background-color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #all-off {
+            display: block;
+            width: 120px;
+            height: 40px;
+            margin: 20px auto;
+            background-color: red;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .grid-item {
+            background-color: white;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .grid-item.on {
+            background-color: limegreen;
+        }
+        html, body {
+            margin: 10px;
+            padding: 10px;
+            font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+
+        #calendar {
+            max-width: 1100px;
+            max-height: 500px;
+            margin: 25px auto;
+        }
+
+    
+    
+    </style>
+
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+
+</head>
+<body>
+    <h1>The Sprinkle Tinkler</h1>
+
+    <button id="all-off">Turn All Off</button>
+    <button onclick="window.location.href='/schedule'">Go to Scheduling Page</button>
+
+
+    <div id='calendar'></div>
+
+    <div class="grid-container">
+        {% for channel in range(1, 17) %}
+        <div class="grid-item" data-channel="{{channel}}">
+            <h2>Sprinkler {{channel}}</h2>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        $('.grid-item').click(function() {
+            const channel = $(this).attr('data-channel');
+            const isOn = $(this).hasClass('on');
+            $.ajax({
+                url: '/toggle',
+                type: 'POST',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify({
+                    channel: channel,
+                    state: isOn ? 'off' : 'on'
+                }),
+                dataType: "json",
+                success: () => {
+                    $(this).toggleClass('on', !isOn);
+                }
+            });
+        });
+
+        $('#all-off').click(function() {
+            $('.grid-item.on').each(function() {
+                const channel = $(this).attr('data-channel');
+                $.ajax({
+                    url: '/toggle',
+                    type: 'POST',
+                    contentType: 'application/json;charset=UTF-8',
+                    data: JSON.stringify({
+                        channel: channel,
+                        state: 'off'
+                    }),
+                    dataType: "json",
+                    success: () => {
+                        $(this).removeClass('on');
+                    }
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    $.ajax({
+                        url: '/get-events',
+                        type: 'GET',
+                        success: function(data) {
+                            successCallback(data.events);
+                        },
+                        error: function() {
+                            failureCallback('There was an error while fetching events.');
+                        }
+                    });
+                }
+            });
+
+            calendar.render();
+        });
+
+
+    </script>
+</body>
+</html>
