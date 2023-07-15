@@ -70,6 +70,18 @@ def create_schedule():
     db.session.commit()
     return jsonify(schedule.to_dict()), 201  # return created schedule
 
+# Post sprinkler
+@app.route('/sprinklers', methods=['POST'])
+def add_sprinkler():
+    # create a new sprinkler with a default description
+    sprinkler = Sprinkler(description="New Sprinkler")
+    db.session.add(sprinkler)
+    db.session.commit()
+
+    # return the new sprinkler's id and description
+    return jsonify(sprinkler.to_dict()), 201  # return created sprinkler
+
+
 
 
 # GET schedule by id
@@ -147,6 +159,12 @@ def get_sprinklers():
     sprinklers = Sprinkler.query.all()
     return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
 
+#DELETE sprinkler by id
+@app.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
+def delete_sprinkler(sprinkler_id):
+    Sprinkler.query.filter_by(id=sprinkler_id).delete()
+    db.session.commit()
+    return jsonify({'message': f'Sprinkler {sprinkler_id} deleted successfully'}), 200
 
 
 #===================================================================================================
@@ -164,9 +182,9 @@ def schedule():
 @app.route('/toggle', methods=['POST'])
 def toggle_relay():
     data = request.get_json(force=True)
-    channel = int(data.get('channel'))
+    id = int(data.get('id'))
     state = data.get('state') == 'on'
-    relay.control_channel(channel, state)
+    relay.control_channel(id, state)
     return jsonify({'status': 'success'})
 
 @app.route('/get-events', methods=['GET'])
