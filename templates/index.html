@@ -6,6 +6,8 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.1/font/bootstrap-icons.css" rel="stylesheet">
+
     <style>
         .dark-mode {
             background-color: #343a40;
@@ -52,22 +54,23 @@
         // Load sprinklers from the database
         $.getJSON('/sprinklers', function(data) {
             $.each(data, function(key, val) {
-                addSprinklerButton(val.id);
+                // load the sprinkler id and name into the button group
+                addSprinklerButton(val.id, val.name);
             });
         });
 
         // Add and remove sprinkler button functionality
         $('#add-sprinkler').click(function() {
             $.post('/sprinklers', function(data) {
-                addSprinklerButton(data.id);
+                addSprinklerButton(data.id, "Sprinkler");
             });
         });
 
-        function addSprinklerButton(id) {
+        function addSprinklerButton(id, name) {
             
             var idButton = $('<button class="btn btn-secondary mr-0 ml-0" data-id="' + id + '">' + id + '</button>');
-            var sprinklerButton = $('<button class="btn btn-secondary mr-0 ml-0" data-id="' + id + '">Sprinkler</button>');
-            var editButton = $('<button class="btn btn-secondary mr-0 ml-0">Edit</button>');
+            var sprinklerButton = $('<button class="btn btn-secondary mr-0 ml-0" data-id="' + id + '">' + name + '</button>');
+            var editButton = $('<button class="btn btn-secondary mr-0 ml-0"><i class="bi-pencil-square"></i></button>');
             var deleteButton = $('<button class="btn btn-danger ml-0">x</button>');
             var buttonGroup = $('<div class="btn-group mr-1 ml-1" role="group"></div>');
 
@@ -108,46 +111,42 @@
                     var newId = idInput.val();
                     var newName = nameInput.val();
 
-                    // If ID hasn't changed, just update the name and refresh button group
-                    if (newId === String(id)) {
-                        // Remove the current button group
-                        buttonGroup.remove();
+                    // Send an AJAX request to update the sprinkler
+                    $.ajax({
+                        url: '/sprinklers/' + id,
+                        type: 'PUT',
+                        contentType: 'application/json;charset=UTF-8',
+                        data: JSON.stringify({
+                            id: newId,
+                            name: newName
+                        }),
+                        dataType: "json",
+                        success: () => {
+                            // Remove the current button group
+                            buttonGroup.remove();
 
-                        // Re-add the button group, which will pull the updated data from the database
-                        addSprinklerButton(id);
-                    } else {
-                        // If ID has changed, send an AJAX request to update the sprinkler
-                        $.ajax({
-                            url: '/sprinklers/' + id,
-                            type: 'PUT',
-                            contentType: 'application/json;charset=UTF-8',
-                            data: JSON.stringify({
-                                id: newId,
-                                description: newName
-                            }),
-                            dataType: "json",
-                            success: () => {
-                                // Remove the current button group
-                                buttonGroup.remove();
-
-                                // Re-add the button group, which will pull the updated data from the database
-                                addSprinklerButton(newId);
-                            },
-                            error: (jqXHR) => {
-                                // If an error occurs, revert the changes and show an alert
-                                alert(jqXHR.responseJSON.error);
-                                idButton.text(id);
-                                sprinklerButton.text('Sprinkler');
-                            }
-                        });
-                    }
+                            // Re-add the button group, which will pull the updated data from the database
+                            addSprinklerButton(newId, newName);
+                        },
+                        error: (jqXHR) => {
+                            // If an error occurs, revert the changes and show an alert
+                            alert(jqXHR.responseJSON.error);
+                            idButton.text(id);
+                            sprinklerButton.text('Sprinkler');
+                        }
+                    });
+                    editButton.html('<i class="bi bi-pencil-square"></i>'); // Changed to 'pencil' symbol
+                    editButton.removeClass('btn-success').addClass('btn-warning');
                 } else {
                     // If editButton is a pencil, i.e., we're in view mode
                     idButton.replaceWith(idInput = $('<input type="number" value="' + idButton.text() + '">'));
                     sprinklerButton.replaceWith(nameInput = $('<input type="text" value="' + sprinklerButton.text() + '">'));
-                    editButton.removeClass('btn-warning').addClass('btn-success').text('✓');
+                    editButton.html('<i class="bi bi-check"></i>'); // Changed to 'check' symbol
+                    editButton.removeClass('btn-warning').addClass('btn-success');
                 }
             });
+
+
 
 
 

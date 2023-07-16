@@ -33,13 +33,13 @@ class Schedule(db.Model):
 
 class Sprinkler(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     watering_tasks = db.relationship('WateringTask', backref='sprinkler', lazy=True)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'description': self.description,
+            'name': self.name,
             'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
 
@@ -72,37 +72,38 @@ def create_schedule():
 
 @app.route('/sprinklers', methods=['POST'])
 def add_sprinkler():
-    # create a new sprinkler with a default description
-
-    # Find the lowest unused id
+    # create a new sprinkler with a default name
     all_ids = set(x[0] for x in db.session.query(Sprinkler.id).all())
     new_id = next(i for i in range(1, len(all_ids) + 2) if i not in all_ids)
-
-    sprinkler = Sprinkler(id=new_id, description="New Sprinkler")
+    sprinkler = Sprinkler(id=new_id, name="New Sprinkler")  # Change 'description' to 'name'
     db.session.add(sprinkler)
     db.session.commit()
-
-    # return the new sprinkler's id and description
-    return jsonify(sprinkler.to_dict()), 201  # return created sprinkler
+    return jsonify(sprinkler.to_dict()), 201
 
 @app.route('/sprinklers/<int:sprinkler_id>', methods=['PUT'])
 def update_sprinkler(sprinkler_id):
     data = request.get_json(force=True)
 
+    # Get the existing sprinkler
+    existing_sprinkler = Sprinkler.query.get(sprinkler_id)
+
+    if not existing_sprinkler:
+        return jsonify({'error': 'Sprinkler not found'}), 404  # HTTP status code 404 means "Not Found"
+
     # Check if a sprinkler with the new ID already exists
-    if Sprinkler.query.get(data['id']):
+    conflict_sprinkler = Sprinkler.query.filter_by(id=data['id']).first()
+    if conflict_sprinkler and conflict_sprinkler.id != existing_sprinkler.id:
         return jsonify({'error': 'A sprinkler with this ID already exists'}), 409  # HTTP status code 409 means "Conflict"
 
-    # Delete the old sprinkler
-    Sprinkler.query.filter_by(id=sprinkler_id).delete()
+    # Update the id and name
+    existing_sprinkler.id = data['id']
+    existing_sprinkler.name = data['name']
 
-    # Create a new sprinkler with the updated id and description
-    new_sprinkler = Sprinkler(id=data['id'], description=data['description'])
-
-    db.session.add(new_sprinkler)
     db.session.commit()
 
-    return jsonify(new_sprinkler.to_dict())
+    return jsonify(existing_sprinkler.to_dict())
+
+
 
 
 

@@ -1,8 +1,8 @@
-"""update nullable
+"""update sprinkler table
 
-Revision ID: 40bdc968594f
+Revision ID: fde90ae6d9e7
 Revises: 
-Create Date: 2023-07-14 02:44:56.550441
+Create Date: 2023-07-15 21:38:12.953038
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '40bdc968594f'
+revision = 'fde90ae6d9e7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,7 +28,7 @@ def upgrade():
     )
     op.create_table('sprinkler',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('description', sa.String(length=255), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('watering_task',
