@@ -6,7 +6,7 @@ ser = serial.Serial(port, 9600, timeout=5)
 
 delay = 0.1
 tap_delay = 2
-ready_delay = 3
+ready_delay = .5
 off_delay = .5
 relay_count = 17
 
@@ -49,8 +49,25 @@ def control_channel(channel, on):
             print_and_write(commandTable[channel][0])
             sleep(off_delay)
 
+
 def print_and_write(command):
     print("Command to send: ", command)
     ser.write(command)
+
+# get the relay_states
+def get_status():
+    return relay_states
+
+def turn_on_all_relays():
+    print_and_write(commandTable[17][1])
+
+def turn_off_all_relays():
+    print_and_write(commandTable[17][0])
+
+
+
+
+
+
 
 

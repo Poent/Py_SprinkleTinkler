@@ -199,6 +199,15 @@ def get_events():
     return jsonify({'events': events})
 
 if __name__ == '__main__':
+
+    # turn off all relays
+    relay.turn_off_all_relays()
+
+    #set the state of the relays in the database to off
+    for i in range(1, 17):
+        relay.control_channel(i, False)
+
+    # run the app    
     app.run(host='0.0.0.0', port=8080)
 
 

@@ -7,10 +7,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
         .dark-mode {
             background-color: #343a40;
             color: #fff;
@@ -34,6 +30,24 @@
     <div id='calendar'></div>
     <button id="add-sprinkler" class="btn btn-success mb-3">Add Sprinkler</button>
     <div id="sprinkler-buttons" class="d-flex flex-wrap justify-content-center"></div>
+    <script>
+       $('#dark-mode-toggle').click(function() {
+            $('body').toggleClass('bg-dark text-white');
+            $('#page-title').toggleClass('dark-title'); /* Use the new class here */
+            $('table').toggleClass('table-dark');
+            $('.btn').toggleClass('btn-light btn-dark');
+            const darkMode = $('body').hasClass('bg-dark');
+            localStorage.setItem('dark-mode', darkMode);
+        });
+
+        if(localStorage.getItem('dark-mode') === 'true') {
+            $('body').addClass('bg-dark text-white');
+            $('#page-title').addClass('dark-title'); /* And here */
+            $('table').addClass('table-dark');
+            $('.btn').addClass('btn-light');
+        }
+    </script>
+    
     <script>
         // Load sprinklers from the database
         $.getJSON('/sprinklers', function(data) {
@@ -84,23 +98,6 @@
             buttonGroup.append(sprinklerButton, deleteButton);
             $('#sprinkler-buttons').append(buttonGroup);
         }
-
-
-
-
-        // Dark mode toggle
-        $('#dark-mode-toggle').click(function() {
-            $('body').toggleClass('dark-mode');
-            $('.btn').toggleClass('btn-light btn-dark');
-            if ($('body').hasClass('dark-mode')) {
-                $('body, h1, .btn').css({"background-color": "#343a40", "color": "#fff"});
-            } else {
-                $('body').css({"background-color": "#f8f9fa", "color": "#212529"});
-                $('h1').css({"background-color": "#fff", "color": "#212529"});
-                $('.btn').css({"background-color": "", "color": ""});
-            }
-        });
-
 
         // Calendar initialization
         document.addEventListener('DOMContentLoaded', function() {
