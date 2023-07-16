@@ -1,6 +1,10 @@
-# Sprinkler Scheduler API
+# Python Sprinkler Controller
+# The Sprinkler Tinkler
 
-The Sprinkler Scheduler API is a Flask-based RESTful API for managing irrigation schedules for an automated sprinkler system. It provides endpoints for managing schedules, watering tasks, and sprinklers. In addition, it provides functionality for controlling a relay (that presumably controls an actual watering system) and a basic interface for visualizing schedules.
+This repo contains a python app that interreacts with the relay.py script to control a USB serial bank of relays. The python app(.py) presents API endpoints to control the database status and relay states, and uses flask to host a website with controls. 
+
+The overall application will eventually provide common sprinkler controls and schedules - with the idea that this is a far more affordable system than over the shelf models.
+
 
 ## Features
 
@@ -15,30 +19,6 @@ The Sprinkler Scheduler API is a Flask-based RESTful API for managing irrigation
 - Flask-SQLAlchemy
 - Flask-Migrate
 - SQLite
-
-## Installation
-
-1. Clone the repository:
-    ```
-    git clone <repository-url>
-    ```
-2. Navigate to the project directory:
-    ```
-    cd <project-directory>
-    ```
-3. Install the requirements:
-    ```
-    pip install -r requirements.txt
-    ```
-4. Initialize and upgrade the database:
-    ```
-    flask db init
-    flask db upgrade
-    ```
-5. Run the application:
-    ```
-    python app.py
-    ```
 
 ## API Endpoints
 
