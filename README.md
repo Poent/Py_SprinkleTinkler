@@ -1,42 +1,35 @@
-# Python Sprinkler Controller
-# The Sprinkler Tinkler
+# Py_SprinkleTinkler
 
-This repo contains a python app that interreacts with the relay.py script to control a USB serial bank of relays. The python app(.py) presents API endpoints to control the database status and relay states, and uses flask to host a website with controls. 
+Py_SprinkleTinkler is a work-in-progress sprinkler controller application. It is designed to control a large number of sprinkler channels, providing an affordable alternative to commercial controllers. 
 
-The overall application will eventually provide common sprinkler controls and schedules - with the idea that this is a far more affordable system than over the shelf models.
+This project is primarily a learning experience and a fun endeavor, and it's worth noting that there are other, more advanced open-source sprinkler controller systems available.
 
+## Project Structure
 
-## Features
+The project consists of several Python and HTML files:
 
-- CRUD operations for schedules, watering tasks, and sprinklers
-- Direct relay control through a POST endpoint
-- Access to event data for visualization
+- `relay.py`: This file contains the `Relay` class, which is used to control the GPIO pins on the Raspberry Pi. Each instance of the class represents a single relay, which can be turned on or off.
 
-## Requirements
+- `app.py`: This is the main application file. It sets up the Flask web server and defines the routes for the application.
 
-- Python 3.8 or later
-- Flask
-- Flask-SQLAlchemy
-- Flask-Migrate
-- SQLite
+- `templates/index.html`: This is the main page of the web application. It provides a user interface for controlling the sprinklers and viewing the schedule.
 
-## API Endpoints
+- `templates/schedule.html`: This page provides a user interface for creating and managing watering schedules.
 
-- `POST /schedules`: Create a new schedule
-- `GET /schedules/<schedule_id>`: Retrieve a specific schedule by ID
-- `GET /schedules`: Retrieve all schedules
-- `PUT /schedules/<schedule_id>`: Update a specific schedule by ID
-- `DELETE /schedules/<schedule_id>`: Delete a specific schedule by ID
-- `GET /schedules/<schedule_id>/watering_tasks`: Retrieve all watering tasks for a specific schedule
-- `GET /watering_tasks`: Retrieve all watering tasks
-- `GET /sprinklers`: Retrieve all sprinklers
-- `POST /toggle`: Control the relay
-- `GET /get-events`: Get all events for visualization
+## Usage
+
+To use this application, you will need to have Python and Flask installed. You can then run the application by executing the `app.py` script.
+
+Please note that this application is designed to eventually be used with a Raspberry Pi and a relay module. Currently, it uses a SainSmart 16-channel USB Relay bank and is controlled via USB serial commands. If you use this code before I have updated it for the Raspberry Pi, you will need to update the "relay.py" functions yourself to handle the appropriate relay controls. 
+
+## Contributing
+
+As this is a work-in-progress project, contributions are welcome. Feel free to fork the repository and submit pull requests.
+
+## Disclaimer
+
+This project is intended for educational purposes and personal use. The author is not responsible for any damage caused by the misuse of the software.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
-
-*Note: The `relay.control_channel` function is not implemented in this code snippet. You must implement it yourself, according to the specific hardware you're using.*
-
-*Also, the templates 'index.html' and 'schedule.html' are not provided. You need to implement them according to your needs.*
+This project is open source under the MIT license.
