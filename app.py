@@ -70,16 +70,41 @@ def create_schedule():
     db.session.commit()
     return jsonify(schedule.to_dict()), 201  # return created schedule
 
-# Post sprinkler
 @app.route('/sprinklers', methods=['POST'])
 def add_sprinkler():
     # create a new sprinkler with a default description
-    sprinkler = Sprinkler(description="New Sprinkler")
+
+    # Find the lowest unused id
+    all_ids = set(x[0] for x in db.session.query(Sprinkler.id).all())
+    new_id = next(i for i in range(1, len(all_ids) + 2) if i not in all_ids)
+
+    sprinkler = Sprinkler(id=new_id, description="New Sprinkler")
     db.session.add(sprinkler)
     db.session.commit()
 
     # return the new sprinkler's id and description
     return jsonify(sprinkler.to_dict()), 201  # return created sprinkler
+
+@app.route('/sprinklers/<int:sprinkler_id>', methods=['PUT'])
+def update_sprinkler(sprinkler_id):
+    data = request.get_json(force=True)
+
+    # Check if a sprinkler with the new ID already exists
+    if Sprinkler.query.get(data['id']):
+        return jsonify({'error': 'A sprinkler with this ID already exists'}), 409  # HTTP status code 409 means "Conflict"
+
+    # Delete the old sprinkler
+    Sprinkler.query.filter_by(id=sprinkler_id).delete()
+
+    # Create a new sprinkler with the updated id and description
+    new_sprinkler = Sprinkler(id=data['id'], description=data['description'])
+
+    db.session.add(new_sprinkler)
+    db.session.commit()
+
+    return jsonify(new_sprinkler.to_dict())
+
+
 
 
 
