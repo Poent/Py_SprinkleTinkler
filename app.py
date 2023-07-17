@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
+from sqlalchemy import DateTime
 
 import relay
 
@@ -11,14 +12,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///schedules.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+
+
 class Schedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     frequency = db.Column(db.String(50), nullable=True)
     description = db.Column(db.String(255), nullable=True)
     start_time = db.Column(db.Time, nullable=True)
+    last_run = db.Column(DateTime, nullable=True)  # New field
+    next_run = db.Column(DateTime, nullable=True)  # New field
     watering_tasks = db.relationship('WateringTask', backref='schedule', lazy=True, cascade='all,delete')
-
 
     def to_dict(self):
         return {
@@ -27,8 +31,11 @@ class Schedule(db.Model):
             'frequency': self.frequency,
             'description': self.description,
             'start_time': str(self.start_time),
+            'last_run': self.last_run.isoformat() if self.last_run else None,  # Convert to ISO format
+            'next_run': self.next_run.isoformat() if self.next_run else None,  # Convert to ISO format
             'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
+
 
 
 class Sprinkler(db.Model):
@@ -105,8 +112,11 @@ def update_sprinkler(sprinkler_id):
 
 
 
-
-
+@app.route('/schedule')
+def schedule():
+    schedules = Schedule.query.all()
+    watering_tasks = WateringTask.query.all()
+    return render_template('schedule.html', schedules=schedules, watering_tasks=watering_tasks)
 
 
 
@@ -200,10 +210,6 @@ def delete_sprinkler(sprinkler_id):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/schedule')
-def schedule():
-    return render_template('schedule.html')
 
 @app.route('/toggle', methods=['POST'])
 def toggle_relay():

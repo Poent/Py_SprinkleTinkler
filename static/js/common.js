@@ -15,7 +15,7 @@ $(document).ready(function() {
     if(localStorage.getItem('dark-mode') === 'true') {
         $('body').addClass('bg-dark');
         $('body').addClass('text-light');
-        $('table').addClass('table-info');
+        $('table').addClass('table-dark');
         $('.btn').addClass('btn-light');
     }
 
