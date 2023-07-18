@@ -67,15 +67,21 @@ class WateringTask(db.Model):
 
 
 #===================================================================================================
-# Scheudule routes
+# sprinkler routes
+#===================================================================================================
 
-@app.route('/schedules', methods=['POST'])
-def create_schedule():
-    data = request.get_json(force=True)
-    schedule = Schedule(name=data.get('name'))
-    db.session.add(schedule)
+
+@app.route('/sprinklers', methods=['GET'])
+def get_sprinklers():
+    sprinklers = Sprinkler.query.all()
+    return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
+
+#DELETE sprinkler by id
+@app.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
+def delete_sprinkler(sprinkler_id):
+    Sprinkler.query.filter_by(id=sprinkler_id).delete()
     db.session.commit()
-    return jsonify(schedule.to_dict()), 201  # return created schedule
+    return jsonify({'message': f'Sprinkler {sprinkler_id} deleted successfully'}), 200
 
 @app.route('/sprinklers', methods=['POST'])
 def add_sprinkler():
@@ -111,6 +117,9 @@ def update_sprinkler(sprinkler_id):
     return jsonify(existing_sprinkler.to_dict())
 
 
+#===================================================================================================
+# Scheudule routes
+#===================================================================================================
 
 @app.route('/schedule')
 def schedule():
@@ -118,7 +127,13 @@ def schedule():
     watering_tasks = WateringTask.query.all()
     return render_template('schedule.html', schedules=schedules, watering_tasks=watering_tasks)
 
-
+@app.route('/schedules', methods=['POST'])
+def create_schedule():
+    data = request.get_json(force=True)
+    schedule = Schedule(name=data.get('name'))
+    db.session.add(schedule)
+    db.session.commit()
+    return jsonify(schedule.to_dict()), 201  # return created schedule
 
 # GET schedule by id
 @app.route('/schedules/<int:schedule_id>', methods=['GET'])
@@ -127,7 +142,6 @@ def get_schedule(schedule_id):
     if schedule is None:
         return jsonify({'error': 'Schedule not found'}), 404
     return jsonify(schedule.to_dict())
-
 
 # GET all schedules
 @app.route('/schedules', methods=['GET'])
@@ -182,25 +196,19 @@ def get_watering_tasks(schedule_id):
     watering_tasks = WateringTask.query.filter_by(schedule_id=schedule_id).all()
     return jsonify([watering_task.to_dict() for watering_task in watering_tasks])
 
+
+# ===================================================================================================
+
+
+
+
+
 # GET all watering tasks
 @app.route('/watering_tasks', methods=['GET'])
 def get_all_watering_tasks():
     watering_tasks = WateringTask.query.all()
     return jsonify([watering_task.to_dict() for watering_task in watering_tasks])
 
-
-# GET all sprinklers
-@app.route('/sprinklers', methods=['GET'])
-def get_sprinklers():
-    sprinklers = Sprinkler.query.all()
-    return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
-
-#DELETE sprinkler by id
-@app.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
-def delete_sprinkler(sprinkler_id):
-    Sprinkler.query.filter_by(id=sprinkler_id).delete()
-    db.session.commit()
-    return jsonify({'message': f'Sprinkler {sprinkler_id} deleted successfully'}), 200
 
 
 #===================================================================================================
