@@ -4,101 +4,97 @@
     <title>Sprinkler Schedule</title>
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <!-- Include Bootstrap JS and its dependencies -->
+    <!-- Include Sortable.js -->
+    <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
+    <style>
+        .sortable-item {
+            border: 1px solid #cccccc;
+            background-color: #f9f9f9;
+            cursor: move;
+            margin-bottom: 10px;
+        }
 
+        /* Add a border and minimum height to the list containers */
+        .list-group {
+            border: 2px dashed #cccccc;
+            min-height: 50px;
+            padding: 10px;
+        }
+
+        .remove-btn {
+            float: right;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    
+    <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
+
     <div class="container">
         <h1>Sprinkler Schedule</h1>
-            
-            <button id="add-schedule" class="btn btn-success mb-1">Add Schedule</button>
-            
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Schedule ID</th>
-                        <th>Schedule Name</th>
-                        <th>Start Time</th>
-                        <th>Frequency</th>
-                        <th>Last Run</th>
-                        <th>Next Run</th>
-                        <th>Watering Tasks</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for schedule in schedules %}
-                        <tr>
-                            <td>{{ schedule.id }}</td>
-                            <td>{{ schedule.name }}</td>
-                            <td>{{ schedule.start_time }}</td>
-                            <td>{{ schedule.frequency }}</td>
-                            <td>{{ schedule.last_run }}</td>
-                            <td>{{ schedule.next_run }}</td>
-                            <td>
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Task Order</th>
-                                            <th>Duration</th>
-                                            <th>Sprinkler</th>
-                                            <th>Del</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for task in schedule.watering_tasks %}
-                                            <tr>
-                                                <td>{{ loop.index }}</td>
-                                                <td>{{ task.duration }}</td>
-                                                <td>{{ task.sprinkler_id }}</td>
-                                                <td>
-                                                    <button class="btn btn-danger btn-sm">X</button>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </td>
-                            <td>
-                                <button class="btn btn-primary mb-1 edit-schedule" data-schedule-id="{{ schedule.id }}">Edit</button>
-                                <button class="btn btn-danger mb-1 delete-schedule" data-schedule-id="{{ schedule.id }}">Delete Schedule</button>
 
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <button id="add-schedule" class="btn btn-success mb-1">Add Schedule</button>
 
-        <h1>Watering Tasks</h1>
-        <button id="add-task" class="btn btn-success mb-3">Add Task</button>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Task ID</th>
-                    <th>Duration</th>
-                    <th>Sprinkler</th>
-                    <th>Schedule</th>
+                    <th>Schedule ID</th>
+                    <th>Schedule Name</th>
+                    <th>Start Time</th>
+                    <th>Frequency</th>
+                    <th>Last Run</th>
+                    <th>Next Run</th>
+                    <th>Watering Tasks</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for task in watering_tasks %}
+                {% for schedule in schedules %}
                     <tr>
-                        <td>{{ task.id }}</td>
-                        <td>{{ task.duration }}</td>
-                        <td>{{ task.sprinkler_id }}</td>
-                        <td>{{ task.schedule_id }}</td>
+                        <td>{{ schedule.id }}</td>
+                        <td>{{ schedule.name }}</td>
+                        <td>{{ schedule.start_time }}</td>
+                        <td>{{ schedule.frequency }}</td>
+                        <td>{{ schedule.last_run }}</td>
+                        <td>{{ schedule.next_run }}</td>
+                        <td>
+                            <ul id="draggableList" class="list-group">
+                                {% for task in schedule.watering_tasks %}
+                                    <li class="sortable-item list-group-item">
+                                        <span>{{ loop.index }} | {{ task.duration }} | {{ task.sprinkler_id }}</span>
+                                        <span class="btn btn-danger btn-sm remove-btn">X</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary mb-1 edit-schedule" data-schedule-id="{{ schedule.id }}">Edit</button>
+                            <button class="btn btn-danger mb-1 delete-schedule" data-schedule-id="{{ schedule.id }}">Delete Schedule</button>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <button onclick="window.location.href='/'" class="btn btn-primary mb-3">Back</button>
+        <h1>Watering Tasks</h1>
+        <button id="add-task" class="btn btn-success mb-3">Add Task</button>
+
+        <ul id="staticList" class="list-group">
+            {% for task in watering_tasks %}
+                <li class="sortable-item list-group-item">
+                    {{ task.id }} | {{ task.duration }} | {{ task.sprinkler_id }} | {{ task.schedule_id }} <button class="btn btn-secondary btn-sm edit-watering-task">edit</button>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <button onclick="window.location.href='/'" class="btn btn-primary mt-4 mb-3">Back</button>
     </div>
         
+
+
     <!-- Modal -->
     <div class="modal fade" id="addScheduleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -148,6 +144,28 @@
     <!-------------------------->
 
     <script>
+        
+        // setup the staticList sortable
+        Sortable.create(staticList, {
+            animation: 150,
+            group: {
+                name: 'shared',
+                pull: 'clone',
+                put: false,
+                revertClone: true
+            }             
+        });
+
+        // setup the draggableList sortable
+        Sortable.create(draggableList, {
+            group: 'shared',
+            animation: 150
+        });
+
+        //setup the remove button
+        $('.remove-btn').on('click', function() {
+            $(this).parent().remove();
+        });
 
         $('#add-schedule').on('click', function() {
             $('#addScheduleModal').modal('show');

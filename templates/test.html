@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drag and Drop Example</title>
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <style>
+        .sortable-item {
+            border: 1px solid #cccccc;
+            background-color: #f9f9f9;
+            cursor: move;
+            margin-bottom: 10px;
+        }
+
+        /* Add a border and minimum height to the list containers */
+        .list-group {
+            border: 2px dashed #cccccc;
+            min-height: 50px;
+            padding: 10px;
+        }
+        
+        .remove-btn {
+            float: right;
+            cursor: pointer;
+            display: none;
+        }
+
+        .sortable-item:hover .remove-btn {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Static List</h2>
+                <ul id="staticList" class="list-group">
+                    <li class="sortable-item list-group-item">Item 1</li>
+                    <li class="sortable-item list-group-item">Item 2</li>
+                    <li class="sortable-item list-group-item">Item 3</li>
+                </ul>
+            </div>
+
+            <div class="col-md-6">
+                <h2>Draggable List</h2>
+                <ul id="draggableList" class="list-group">
+                </ul>
+            </div>
+        </div>
+
+        <div>
+            <button id="save" class="btn btn-primary">Save</button>
+
+        </div>
+    </div>
+
+    <!-- Add Bootstrap JavaScript and its dependencies -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <!-- Add Sortable.js -->
+    <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
+
+    <script>
+        Sortable.create(staticList, {
+            animation: 150,
+            group: {
+                name: 'shared',
+                pull: 'clone',
+                put: false,
+                revertClone: true
+            }             
+        });
+
+        Sortable.create(draggableList, {
+            group: 'shared',
+            animation: 150
+        });
+
+        // sort event handler
+        draggableList.addEventListener('sort', function(e) {
+            console.log(e);
+        });
+
+        // button click event handler
+        save.addEventListener('click', function(e) {
+            var items = document.querySelectorAll('#draggableList li');
+            var order = [];
+            for (var i = 0; i < items.length; i++) {
+                order.push(items[i].innerHTML);
+            }
+            console.log(order);
+        });
+
+    </script>
+    
+</body>
+</html>
