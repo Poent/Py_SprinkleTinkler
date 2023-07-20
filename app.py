@@ -131,6 +131,7 @@ def schedule():
 def create_schedule():
     data = request.get_json(force=True)
     schedule = Schedule(name=data.get('name'))
+    schedule.start_time = datetime.strptime(data.get('start_time'), "%H:%M:%S").time()
     db.session.add(schedule)
     db.session.commit()
     return jsonify(schedule.to_dict()), 201  # return created schedule
