@@ -130,15 +130,19 @@ def schedule():
 @app.route('/schedules', methods=['POST'])
 def create_schedule():
     data = request.get_json(force=True)
-    schedule = Schedule(name=data.get('name'))
-    schedule.start_time = datetime.strptime(data.get('start_time'), "%H:%M:%S").time()
-    db.session.add(schedule)
+    print('/schedules POST called')
+    print(data)
+    new_schedule = Schedule(name=data['name'])
+    db.session.add(new_schedule)
     db.session.commit()
-    return jsonify(schedule.to_dict()), 201  # return created schedule
+    return jsonify(new_schedule.to_dict()), 201
+
+
 
 # GET schedule by id
 @app.route('/schedules/<int:schedule_id>', methods=['GET'])
 def get_schedule(schedule_id):
+    print('/schedules/<int:schedule_id> GET called')
     schedule = Schedule.query.get(schedule_id)
     if schedule is None:
         return jsonify({'error': 'Schedule not found'}), 404
@@ -148,7 +152,12 @@ def get_schedule(schedule_id):
 @app.route('/schedules', methods=['GET'])
 def get_schedules():
     schedules = Schedule.query.all()
+    print('/schedules GET called')
     return jsonify([schedule.to_dict() for schedule in schedules])
+
+
+
+          
 
 # PUT schedule by id
 @app.route('/schedules/<int:schedule_id>', methods=['PUT'])

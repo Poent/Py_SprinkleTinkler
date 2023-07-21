@@ -17,11 +17,23 @@ $(document).ready(function() {
         $("#scheduleModal").modal("show");
     });
 
+    // add schedule form submit event
+    $("#schedule-form").submit(function(e) {
+        e.preventDefault(); // Prevent form from submitting normally
+        // Call the addSchedule function
+        // log to the console
+        console.log("Add Schedule form submitted");
+        addSchedule();
+    });
+
+
     // Edit Schedule button click event
     $("#edit-schedule-form").submit(function(e) {
         e.preventDefault(); // Prevent form from submitting normally
-        // Call the editSchedule function
-        editSchedule();
+        // Get the scheduleId from the hidden input
+        let scheduleId = $("#edit-schedule-id").val();
+        // Call the editSchedule function with scheduleId
+        editSchedule(scheduleId);
     });
     
     // Event handlers for "Edit Watering Task" and "Edit Schedule" buttons
@@ -38,6 +50,16 @@ $(document).ready(function() {
         // Show the modal
         $("#editScheduleModal").modal("show");
     });
+
+    // Event handler for "Delete" button
+    $("#schedules-table").on("click", ".btn-delete-schedule", function(e) {
+        e.stopPropagation();  // Prevent triggering the row click event
+        let scheduleId = $(this).closest("tr").data("id");
+
+        // Call the deleteSchedule function with scheduleId
+        deleteSchedule(scheduleId);
+    });
+
 
     // go back to the index page
     $("#back").click(function() {
@@ -68,7 +90,7 @@ function getSchedules() {
                         <td>${schedule.nextRunTime}</td>
                         <td>
                             <button class="btn btn-sm btn-primary">Edit</button>
-                            <button class="btn btn-sm btn-danger">Delete</button>
+                            <button class="btn btn-sm btn-danger btn-delete-schedule">Delete</button>
                         </td>
                     </tr>
                 `);
@@ -107,9 +129,7 @@ function getScheduleDetails(scheduleId) {
 function addSchedule() {
     // Get the schedule data from the form
     let scheduleData = {
-        name: $("#schedule-name").val(),
-        wateringTask: $("#watering-task").val(),
-        schedule: $("#schedule").val()
+        name: $("#schedule-name").val()
     };
 
     // output debug info to the console
@@ -118,10 +138,11 @@ function addSchedule() {
     $.ajax({
         url: '/schedules', // your endpoint to add a schedule
         type: 'POST',
-        data: scheduleData,
+        contentType: 'application/json',
+        data: JSON.stringify(scheduleData),
         success: function(schedule) {
-            // Hide the modal
-            $("#addScheduleModal").modal("hide");
+            console.log("Schedule added successfully");
+            $("#scheduleModal").modal("hide");
 
             // Clear the form
             $("#schedule-name").val("");
@@ -158,6 +179,21 @@ function editSchedule() {
             // Clear the form
             $("#edit-schedule-name").val("");
 
+            // Refresh the schedules table
+            getSchedules();
+        },
+        error: function(error) {
+            console.log(error);
+        }
+    });
+}
+
+// Function to delete a schedule
+function deleteSchedule(scheduleId) {
+    $.ajax({
+        url: '/schedules/' + scheduleId, // your endpoint to delete a schedule
+        type: 'DELETE',
+        success: function(schedule) {
             // Refresh the schedules table
             getSchedules();
         },
