@@ -41,29 +41,36 @@ class Schedule(db.Model):
 class Sprinkler(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    watering_tasks = db.relationship('WateringTask', backref='sprinkler', lazy=True)
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-            'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
 
 
+# WateringTask class
 class WateringTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     duration = db.Column(db.Integer, nullable=False)
     schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
-    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)
+    task_order = db.Column(db.Integer, nullable=False)
+    sprinklers = db.relationship('Sprinkler', secondary='watering_task_sprinkler', backref=db.backref('watering_tasks', lazy='dynamic'))
 
     def to_dict(self):
         return {
             'id': self.id,
             'duration': self.duration,
             'schedule_id': self.schedule_id,
-            'sprinkler_id': self.sprinkler_id
+            'sprinklers': [sprinkler.to_dict() for sprinkler in self.sprinklers],
+            'task_order': self.task_order  
         }
+    
+# association table
+watering_task_sprinkler = db.Table('watering_task_sprinkler',
+    db.Column('watering_task_id', db.Integer, db.ForeignKey('watering_task.id'), primary_key=True),
+    db.Column('sprinkler_id', db.Integer, db.ForeignKey('sprinkler.id'), primary_key=True)
+)
 
 
 #===================================================================================================
@@ -73,8 +80,13 @@ class WateringTask(db.Model):
 
 @app.route('/sprinklers', methods=['GET'])
 def get_sprinklers():
-    sprinklers = Sprinkler.query.all()
-    return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
+    try:
+        sprinklers = Sprinkler.query.all()
+        return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
+    except Exception as e:
+        print(e)  # Log the exception to the console for debugging
+        return jsonify({'error': 'Internal Server Error'}), 500
+
 
 #DELETE sprinkler by id
 @app.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
@@ -185,11 +197,22 @@ def update_schedule(schedule_id):
             watering_task = WateringTask.query.get(wt_data['id'])
             if watering_task:
                 watering_task.duration = wt_data.get('duration', watering_task.duration)
-                watering_task.sprinkler_id = wt_data.get('sprinkler_id', watering_task.sprinkler_id)
+                sprinkler_ids = wt_data.get('sprinkler_ids', [])
+                watering_task.sprinklers.clear()  # Clear existing sprinkler associations
+                for id in sprinkler_ids:
+                    sprinkler = Sprinkler.query.get(id)
+                    if sprinkler:
+                        watering_task.sprinklers.append(sprinkler)
             else:
-                new_watering_task = WateringTask(duration=wt_data['duration'], sprinkler_id=wt_data['sprinkler_id'], schedule_id=schedule.id)
+                sprinkler_ids = wt_data.get('sprinkler_ids', [])
+                new_watering_task = WateringTask(duration=wt_data['duration'], schedule_id=schedule.id)
+                for id in sprinkler_ids:
+                    sprinkler = Sprinkler.query.get(id)
+                    if sprinkler:
+                        new_watering_task.sprinklers.append(sprinkler)
                 db.session.add(new_watering_task)
     db.session.commit()
+
 
     return jsonify(schedule.to_dict())
 
@@ -218,6 +241,23 @@ def get_watering_tasks(schedule_id):
 def get_all_watering_tasks():
     watering_tasks = WateringTask.query.all()
     return jsonify([watering_task.to_dict() for watering_task in watering_tasks])
+
+
+@app.route('/api/wateringTasks', methods=['POST'])
+def create_watering_tasks():
+    tasks = request.get_json()
+    for task in tasks:
+        new_task = WateringTask(
+            duration=task['duration'],
+            schedule_id=task['schedule_id'],
+            task_order=task['task_order']
+        )
+        for sprinkler in task['sprinklers']:
+            new_task.sprinklers.append(Sprinkler.query.get(sprinkler['id']))
+        db.session.add(new_task)
+    db.session.commit()
+    return jsonify({'message': 'Tasks created successfully'}), 201
+
 
 
 

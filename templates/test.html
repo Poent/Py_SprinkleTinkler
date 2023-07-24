@@ -58,9 +58,9 @@
             <div class="col-md-6">
                 <h2>Sprinkler List</h2>
                 <ul id="sprinklerList" class="list-group">
-                    <li class="sortable-item list-group-item">Sprinkler 1</li>
-                    <li class="sortable-item list-group-item">Sprinkler 2</li>
-                    <li class="sortable-item list-group-item">Sprinkler 3</li>
+                    {% for sprinkler in sprinklers %}
+                        <li class="sortable-item list-group-item" data-id="{{ sprinkler.id }}">{{ sprinkler.name }}</li>
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -78,7 +78,7 @@
     </div>
 
     <!-- Add Bootstrap JavaScript and its dependencies -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
@@ -86,6 +86,32 @@
     <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
 
     <script>
+
+        $(document).ready(function(){
+            $.getJSON("/sprinklers", function(data){
+                // Empty the list first
+                $("#sprinklerList").empty();
+                
+                // Populate the list with data from the server
+                $.each(data, function(index, sprinkler){
+                    var li = $("<li>").text(sprinkler.name).addClass("sortable-item list-group-item").attr("data-id", sprinkler.id);
+                    $("#sprinklerList").append(li);
+                });
+
+                // Create Sortable.js instance after populating the list
+                Sortable.create(sprinklerList, {
+                    animation: 150,
+                    group: {
+                        name: 'shared',
+                        pull: 'clone',
+                        put: false,
+                        revertClone: true
+                    }
+                });
+            });
+        });
+
+
         var sprinklerList = document.getElementById('sprinklerList');
         var wateringTasksList = document.getElementById('wateringTasksList');
         var save = document.getElementById('save');
@@ -125,7 +151,8 @@
                 // time input field
                 var timeInput = document.createElement('input');
                 timeInput.type = "number";
-                timeInput.min = "0";
+                timeInput.min = "1";
+                timeInput.value = "5";
                 timeInput.placeholder = "Enter time in mins";
                 timeInput.classList.add('time-input');
                 timeContainer.appendChild(timeInput);
@@ -173,6 +200,39 @@
         back.addEventListener('click', function(e) {
             window.location.href = '/';
         });
+
+        // button click event handler
+        save.addEventListener('click', function(e) {
+            var items = document.querySelectorAll('#wateringTasksList li');
+            var tasks = [];
+            for (var i = 0; i < items.length; i++) {
+                tasks.push({
+                    duration: items[i].querySelector('.time-input').value,
+                    schedule_id: 1,
+                    task_order: i,
+                    sprinklers: [
+                    {
+                        id: items[i].getAttribute('data-id')
+                    }
+                    ]
+                });
+            }
+            $.ajax({
+                url: "/api/wateringTasks",
+                method: "POST",
+                data: JSON.stringify(tasks),
+                contentType: "application/json",
+                success: function(response) {
+                    console.log(response);
+                    alert('Tasks saved successfully!');
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('Failed to save tasks. Please try again.');
+                }
+            });
+        });
+
 
     </script>
     

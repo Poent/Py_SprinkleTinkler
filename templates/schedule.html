@@ -96,28 +96,40 @@
         </div>
     </div>
 
-    <!-- Watering Task Modal -->
-    <div id="editWateringTaskModal" class="modal fade" tabindex="-1" role="dialog">
+    ...
+    <!-- Task List Modal -->
+    <div id="taskListModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Watering Task</h5>
+                    <h5 class="modal-title">Task List</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="edit-watering-task-form">
-                        <div class="form-group">
-                            <label for="watering-task">Watering Task</label>
-                            <input type="text" class="form-control" id="watering-task" placeholder="Enter watering task">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h2>Sprinkler List</h2>
+                            <ul id="sprinklerList" class="list-group">
+                                <!-- Populated by JavaScript -->
+                            </ul>
                         </div>
-                        <button type="submit" class="btn btn-primary">Edit Watering Task</button>
-                    </form>
+    
+                        <div class="col-md-6">
+                            <h2>Watering Tasks</h2>
+                            <ul id="wateringTasksList" class="list-group">
+                                <!-- Populated by JavaScript -->
+                            </ul>
+                        </div>
+                    </div>
+                    <button id="saveTaskList" class="btn btn-primary mt-4">Save</button>
                 </div>
             </div>
         </div>
     </div>
+    ...
+    
        
 
     <script src="/static/js/schedule.js"></script>

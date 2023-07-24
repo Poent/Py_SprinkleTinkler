@@ -41,7 +41,7 @@ $(document).ready(function() {
         e.stopPropagation();  // Prevent triggering the row click event
         let scheduleId = $(this).closest("tr").data("id");
         // Open the modal to edit the watering task with this ID
-        $("#editWateringTaskModal").modal("show");
+        $("#taskListModal").modal("show");
     });
 
     $("#schedules-table").on("click", ".edit-schedule-btn", function(e) {
