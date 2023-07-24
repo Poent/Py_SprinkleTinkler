@@ -6,12 +6,31 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
     <style>
+        /* updated CSS */
         .sortable-item {
             border: 1px solid #cccccc;
             background-color: #f9f9f9;
             cursor: move;
             margin-bottom: 10px;
+            display: flex; /* Make this a flex container */
+            justify-content: space-between; /* Justify content to the space-between */
+            align-items: center; /* Align items to the center */
         }
+
+        .time-label {
+            margin-left: 0;
+            padding: 0;
+        }
+
+        .time-input {
+            width: 60px; /* adjust as needed */
+            margin-left: 0px;
+        }
+
+        .remove-btn {
+            margin-left: 10px;
+        }
+
 
         /* Add a border and minimum height to the list containers */
         .list-group {
@@ -23,35 +42,37 @@
         .remove-btn {
             float: right;
             cursor: pointer;
-            display: none;
         }
 
         .sortable-item:hover .remove-btn {
             display: block;
         }
+
     </style>
 </head>
 <body>
     <div class="container mt-4">
+        <button id="back" class="btn btn-primary">Back</button>
+
         <div class="row">
             <div class="col-md-6">
-                <h2>Static List</h2>
-                <ul id="staticList" class="list-group">
-                    <li class="sortable-item list-group-item">Item 1</li>
-                    <li class="sortable-item list-group-item">Item 2</li>
-                    <li class="sortable-item list-group-item">Item 3</li>
+                <h2>Sprinkler List</h2>
+                <ul id="sprinklerList" class="list-group">
+                    <li class="sortable-item list-group-item">Sprinkler 1</li>
+                    <li class="sortable-item list-group-item">Sprinkler 2</li>
+                    <li class="sortable-item list-group-item">Sprinkler 3</li>
                 </ul>
             </div>
 
             <div class="col-md-6">
-                <h2>Draggable List</h2>
-                <ul id="draggableList" class="list-group">
+                <h2>Watering Tasks</h2>
+                <ul id="wateringTasksList" class="list-group">
                 </ul>
             </div>
         </div>
 
         <div>
-            <button id="save" class="btn btn-primary">Save</button>
+            <button id="save" class="btn btn-primary mt-4">Save</button>
 
         </div>
     </div>
@@ -65,7 +86,12 @@
     <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
 
     <script>
-        Sortable.create(staticList, {
+        var sprinklerList = document.getElementById('sprinklerList');
+        var wateringTasksList = document.getElementById('wateringTasksList');
+        var save = document.getElementById('save');
+        var back = document.getElementById('back');
+
+        Sortable.create(sprinklerList, {
             animation: 150,
             group: {
                 name: 'shared',
@@ -75,24 +101,77 @@
             }             
         });
 
-        Sortable.create(draggableList, {
+        Sortable.create(wateringTasksList, {
             group: 'shared',
-            animation: 150
+            animation: 150,
+            onAdd: function (evt) {
+                var itemEl = evt.item;  // dragged HTMLElement
+
+                // create a div to hold item's content
+                var itemContent = document.createElement('div');
+                itemContent.innerHTML = itemEl.innerHTML;
+                itemEl.innerHTML = '';
+                itemEl.appendChild(itemContent);
+
+                // time input container
+                var timeContainer = document.createElement('div');
+
+                // time label
+                var timeLabel = document.createElement('span');
+                timeLabel.innerHTML = 'Runtime: ';
+                timeLabel.classList.add('time-label');
+                timeContainer.appendChild(timeLabel);
+
+                // time input field
+                var timeInput = document.createElement('input');
+                timeInput.type = "number";
+                timeInput.min = "0";
+                timeInput.placeholder = "Enter time in mins";
+                timeInput.classList.add('time-input');
+                timeContainer.appendChild(timeInput);
+
+                // help text
+                var helpText = document.createElement('small');
+                helpText.innerHTML = "Enter time in minutes";
+                helpText.classList.add('form-text', 'text-muted');
+                timeContainer.appendChild(helpText);
+
+
+                // add time container to item
+                itemEl.appendChild(timeContainer);
+
+                // remove button
+                var removeBtn = document.createElement('button');
+                removeBtn.innerHTML = 'Remove';
+                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
+                removeBtn.addEventListener('click', function(e) {
+                    itemEl.remove();
+                });
+
+                // add remove button to item
+                itemEl.appendChild(removeBtn);
+            }
         });
 
+
+
         // sort event handler
-        draggableList.addEventListener('sort', function(e) {
+        wateringTasksList.addEventListener('sort', function(e) {
             console.log(e);
         });
 
         // button click event handler
         save.addEventListener('click', function(e) {
-            var items = document.querySelectorAll('#draggableList li');
+            var items = document.querySelectorAll('#wateringTasksList li');
             var order = [];
             for (var i = 0; i < items.length; i++) {
                 order.push(items[i].innerHTML);
             }
             console.log(order);
+        });
+
+        back.addEventListener('click', function(e) {
+            window.location.href = '/';
         });
 
     </script>

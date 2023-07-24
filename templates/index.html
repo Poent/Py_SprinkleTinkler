@@ -40,6 +40,10 @@
     <button id="add-sprinkler" class="btn btn-success mb-3">Add Sprinkler</button>
     <div id="sprinkler-buttons" class="d-flex flex-wrap justify-content-center"></div>
     
+    <div>
+        <button id="test-button" class="btn btn-primary">Test</button>
+    </div>
+
     <script>
         // Load sprinklers from the database
         $.getJSON('/sprinklers', function(data) {
@@ -185,6 +189,12 @@
             });
             calendar.render();
         });
+
+        // navigate to test page
+        $('#test-button').click(function() {
+            window.location.href = '/test';
+        });
+
     </script>
 </body>
 </html>

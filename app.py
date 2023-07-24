@@ -248,6 +248,11 @@ def get_events():
     ]
     return jsonify({'events': events})
 
+
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
 if __name__ == '__main__':
 
     # turn off all relays
