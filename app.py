@@ -242,21 +242,56 @@ def get_all_watering_tasks():
     watering_tasks = WateringTask.query.all()
     return jsonify([watering_task.to_dict() for watering_task in watering_tasks])
 
+# GET watering task by schedule_id
+@app.route('/watering_tasks/<int:schedule_id>', methods=['GET'])
+def get_watering_task(schedule_id):
+    watering_tasks = WateringTask.query.filter_by(schedule_id=schedule_id).all()
+    return jsonify([watering_task.to_dict() for watering_task in watering_tasks])
 
-@app.route('/api/wateringTasks', methods=['POST'])
-def create_watering_tasks():
+@app.route('/watering_tasks/<int:schedule_id>', methods=['DELETE'])
+def delete_watering_tasks(schedule_id):
+    task_order = request.args.get('task_order', type=int)
+    try:
+        if task_order is not None:
+            # Delete the specific watering task by schedule_id and task_order
+            watering_task = WateringTask.query.filter_by(schedule_id=schedule_id, task_order=task_order).first()
+            if watering_task:
+                db.session.delete(watering_task)
+                db.session.commit()
+                return jsonify({'message': f'Watering Task {schedule_id}-{task_order} deleted successfully'}), 200
+            else:
+                return jsonify({'error': 'Watering task not found'}), 404
+        else:
+            # Delete all watering tasks for the given schedule_id
+            WateringTask.query.filter_by(schedule_id=schedule_id).delete()
+            db.session.commit()
+            return jsonify({'message': f'All Watering Tasks for schedule_id {schedule_id} deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# POST watering tasks
+@app.route('/watering_tasks/<int:schedule_id>', methods=['POST'])
+def save_watering_tasks(schedule_id):
     tasks = request.get_json()
-    for task in tasks:
-        new_task = WateringTask(
-            duration=task['duration'],
-            schedule_id=task['schedule_id'],
-            task_order=task['task_order']
-        )
-        for sprinkler in task['sprinklers']:
-            new_task.sprinklers.append(Sprinkler.query.get(sprinkler['id']))
-        db.session.add(new_task)
-    db.session.commit()
-    return jsonify({'message': 'Tasks created successfully'}), 201
+
+    try:
+        # Create and add the new watering tasks
+        for task in tasks:
+            new_task = WateringTask(
+                duration=task['duration'],
+                schedule_id=schedule_id,
+                task_order=task['task_order']
+            )
+            for sprinkler in task['sprinklers']:
+                new_task.sprinklers.append(Sprinkler.Session.get(sprinkler['id']))
+            db.session.add(new_task)
+
+        db.session.commit()
+        return jsonify({'message': 'Watering tasks saved successfully'}), 200
+    except Exception as e:
+        db.session.rollback()  # Rollback the changes in case of an error
+        return jsonify({'error': str(e)}), 500
+
 
 
 

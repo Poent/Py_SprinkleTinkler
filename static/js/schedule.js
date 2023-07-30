@@ -36,14 +36,18 @@ $(document).ready(function() {
         editSchedule(scheduleId);
     });
     
-    // Event handlers for "Edit Watering Task" and "Edit Schedule" buttons
+    // Event handlers for "Edit Watering Task"
     $("#schedules-table").on("click", ".task-list-btn", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
         let scheduleId = $(this).closest("tr").data("id");
+
+        
+
         // Open the modal to edit the watering task with this ID
         $("#taskListModal").modal("show");
     });
 
+    // Event handlers for "Edit Schedule" buttons
     $("#schedules-table").on("click", ".edit-schedule-btn", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
         let scheduleId = $(this).closest("tr").data("id");
@@ -66,6 +70,8 @@ $(document).ready(function() {
         window.location.href = "/";
     });
 });
+
+
 
 // Function to get schedules
 function getSchedules() {

@@ -201,7 +201,9 @@
             window.location.href = '/';
         });
 
-        // button click event handler
+        // save button click event handler
+        // first delete all existing tasks that match schedule_id
+
         save.addEventListener('click', function(e) {
             var items = document.querySelectorAll('#wateringTasksList li');
             var tasks = [];
@@ -211,27 +213,47 @@
                     schedule_id: 1,
                     task_order: i,
                     sprinklers: [
-                    {
-                        id: items[i].getAttribute('data-id')
-                    }
+                        {
+                            id: items[i].getAttribute('data-id')
+                        }
                     ]
                 });
             }
+
+            // Delete existing tasks for schedule_id = 1
             $.ajax({
-                url: "/api/wateringTasks",
-                method: "POST",
-                data: JSON.stringify(tasks),
+                url: "/watering_tasks/" + 1,
+                method: "DELETE",
                 contentType: "application/json",
                 success: function(response) {
                     console.log(response);
-                    alert('Tasks saved successfully!');
+
+                    // After successful deletion, proceed with saving the updated tasks
+                    saveWateringTasks(tasks);
                 },
                 error: function(xhr, status, error) {
                     console.error(error);
-                    alert('Failed to save tasks. Please try again.');
+                    alert('Failed to delete existing tasks. Please try again.');
                 }
             });
         });
+
+        function saveWateringTasks(tasks) {
+        $.ajax({
+            url: "/watering_tasks/" + 1,
+            method: "POST",
+            data: JSON.stringify(tasks),
+            contentType: "application/json",
+            success: function(response) {
+                console.log(response);
+                alert('Tasks saved successfully!');
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+                alert('Failed to save tasks. Please try again.');
+            }
+        });
+    }
 
 
     </script>
