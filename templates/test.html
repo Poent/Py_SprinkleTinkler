@@ -202,8 +202,6 @@
         });
 
         // save button click event handler
-        // first delete all existing tasks that match schedule_id
-
         save.addEventListener('click', function(e) {
             var items = document.querySelectorAll('#wateringTasksList li');
             var tasks = [];
@@ -212,11 +210,7 @@
                     duration: items[i].querySelector('.time-input').value,
                     schedule_id: 1,
                     task_order: i,
-                    sprinklers: [
-                        {
-                            id: items[i].getAttribute('data-id')
-                        }
-                    ]
+                    sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
                 });
             }
 
@@ -239,21 +233,21 @@
         });
 
         function saveWateringTasks(tasks) {
-        $.ajax({
-            url: "/watering_tasks/" + 1,
-            method: "POST",
-            data: JSON.stringify(tasks),
-            contentType: "application/json",
-            success: function(response) {
-                console.log(response);
-                alert('Tasks saved successfully!');
-            },
-            error: function(xhr, status, error) {
-                console.error(error);
-                alert('Failed to save tasks. Please try again.');
-            }
-        });
-    }
+            $.ajax({
+                url: "/watering_tasks/" + 1,
+                method: "POST",
+                data: JSON.stringify(tasks),
+                contentType: "application/json",
+                success: function(response) {
+                    console.log(response);
+                    alert('Tasks saved successfully!');
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('Failed to save tasks. Please try again.');
+                }
+            });
+        }
 
 
     </script>

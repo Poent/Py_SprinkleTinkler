@@ -31,32 +31,27 @@ class Schedule(db.Model):
 class Sprinkler(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    watering_tasks = db.relationship('WateringTask', backref='sprinkler', lazy=True)
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
+            'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
-
 
 class WateringTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     duration = db.Column(db.Integer, nullable=False)
     schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
+    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)  # New field
     task_order = db.Column(db.Integer, nullable=False)
-    sprinklers = db.relationship('Sprinkler', secondary='watering_task_sprinkler', backref=db.backref('watering_tasks', lazy='dynamic'))
 
     def to_dict(self):
         return {
             'id': self.id,
             'duration': self.duration,
             'schedule_id': self.schedule_id,
-            'sprinklers': [sprinkler.to_dict() for sprinkler in self.sprinklers],
+            'sprinkler_id': self.sprinkler_id,  # New field
             'task_order': self.task_order  
         }
-
-# association table
-watering_task_sprinkler = db.Table('watering_task_sprinkler',
-    db.Column('watering_task_id', db.Integer, db.ForeignKey('watering_task.id'), primary_key=True),
-    db.Column('sprinkler_id', db.Integer, db.ForeignKey('sprinkler.id'), primary_key=True)
-)
