@@ -18,6 +18,14 @@ def get_sprinklers():
     sprinklers = get_all_sprinklers()
     return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
 
+# get the sprinkler by id
+@sprinkler_bp.route('/sprinklers/<int:sprinkler_id>', methods=['GET'])
+def get_sprinkler(sprinkler_id):
+    sprinkler = Sprinkler.query.get(sprinkler_id)
+    if sprinkler is None:
+        return jsonify({'error': 'Sprinkler not found'}), 404
+    return jsonify(sprinkler.to_dict())
+
 
 @sprinkler_bp.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
 def delete_sprinkler(sprinkler_id):
