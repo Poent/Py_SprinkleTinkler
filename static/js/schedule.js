@@ -134,16 +134,17 @@ $(document).ready(function() {
             loadTasks(scheduleId);
         });
 
-        // check if the save button already exists
+        // check if the save button already exists. if so, remove it (to prevent duplicates)
         if (document.getElementById('saveTaskListBtn')) {
             console.log('save button already exists');
             // remove the existing save button
             document.getElementById('saveTaskListBtn').remove();
         }
 
+        // create the save button
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save';
-        saveBtn.classList.add('btn', 'btn-primary');
+        saveBtn.classList.add('btn', 'btn-primary', 'm-2');
         saveBtn.setAttribute('id', 'saveTaskListBtn');
         saveBtn.setAttribute('data-id', scheduleId);
         saveBtn.setAttribute('data-dismiss', 'modal');
@@ -189,12 +190,8 @@ $(document).ready(function() {
 
             // clear the wateringTasksList
             $('#wateringTasksList').empty();
-            
+
         });
-
-
-
-        
 
 
         // Create Sortable.js instance for the watering tasks list
@@ -509,7 +506,6 @@ async function loadTasks(scheduleId) {
     });
 
 }
-
 
 
 function saveWateringTasks(tasks, scheduleId) {
