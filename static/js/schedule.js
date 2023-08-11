@@ -9,12 +9,52 @@ $(document).ready(function() {
     // Get schedules when document is ready
     getSchedules();
 
-    
+    // event handler for the save button
+    $("#saveBtn").click(function() {
+        // log to the console
+        console.log("Save button clicked");
 
-    // Add event listener to the table rows
-    $("#schedules-table").on("click", "tr", function() {
+        // get the schedule id from the save button
         let scheduleId = $(this).data("id");
-        getScheduleDetails(scheduleId);
+
+        console.log("Save scheduleId: " + scheduleId);
+
+        // get the list of tasks
+        var items = document.querySelectorAll('#wateringTasksList li');
+        var tasks = [];
+        for (var i = 0; i < items.length; i++) {
+            tasks.push({
+                duration: items[i].querySelector('.time-input').value,
+                schedule_id: scheduleId,
+                task_order: i,
+                sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
+            });
+        }
+
+
+        // Delete existing tasks for the associated scheduleId
+        $.ajax({
+            url: "/watering_tasks/" + scheduleId,
+            method: "DELETE",
+            contentType: "application/json",
+            success: function(response) {
+                console.log(response);
+
+                // After successful deletion, proceed with saving the updated tasks
+                saveWateringTasks(tasks, scheduleId);
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+                alert('Failed to delete existing tasks. Please try again.');
+            }
+        });
+
+        // close the modalTask
+        $("#taskListModal").modal("hide");
+
+        // clear the wateringTasksList
+        $('#wateringTasksList').empty();
+
     });
     
     // Add Schedule button click event
@@ -49,7 +89,10 @@ $(document).ready(function() {
     $("#schedules-table").on("click", ".task-list-btn", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
 
-        let scheduleId = $(this).closest("tr").data("id");
+        // Get the schedule id from the button's data attribute
+        const button = $(this);
+        const scheduleId = button.data("id");
+
 
         console.log("Edit Task button clicked for schedule " + scheduleId);
         
@@ -62,10 +105,6 @@ $(document).ready(function() {
         const taskModalHeader = document.getElementById('task-modal-header');
         taskModalHeader.textContent = 'Schedule ' + scheduleId + ' task editor';
 
-        // update the save button to include the schedule id
-        console.log('updating save button');
-        const saveBtn = document.getElementById('save');
-        saveBtn.setAttribute('data-schedule-id', scheduleId);
 
         // Get the schedule id from the button's data attribute
         $.getJSON("/sprinklers", function(data){
@@ -90,7 +129,73 @@ $(document).ready(function() {
                     revertClone: true
                 }
             });
+
+            console.log("loading tasks for schedule " + scheduleId);
+            loadTasks(scheduleId);
         });
+
+        // check if the save button already exists
+        if (document.getElementById('saveTaskListBtn')) {
+            console.log('save button already exists');
+            // remove the existing save button
+            document.getElementById('saveTaskListBtn').remove();
+        }
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.classList.add('btn', 'btn-primary');
+        saveBtn.setAttribute('id', 'saveTaskListBtn');
+        saveBtn.setAttribute('data-id', scheduleId);
+        saveBtn.setAttribute('data-dismiss', 'modal');
+        saveBtn.setAttribute('aria-label', 'Close');
+        saveBtn.setAttribute('type', 'button');
+
+        // add the save button to the modal body
+        const modalBody = document.getElementById('task-modal-body');
+        modalBody.appendChild(saveBtn);
+
+        // Event handler for "Save" button
+        saveBtn.addEventListener('click', function(e) {
+            var items = document.querySelectorAll('#wateringTasksList li');
+            var tasks = [];
+            for (var i = 0; i < items.length; i++) {
+                tasks.push({
+                    duration: items[i].querySelector('.time-input').value,
+                    schedule_id: scheduleId,
+                    task_order: i,
+                    sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
+                });
+            }
+
+            // Delete existing tasks for the associated scheduleId
+            $.ajax({
+                url: "/watering_tasks/" + scheduleId,
+                method: "DELETE",
+                contentType: "application/json",
+                success: function(response) {
+                    console.log(response);
+
+                    // After successful deletion, proceed with saving the updated tasks
+                    saveWateringTasks(tasks, scheduleId);
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    alert('Failed to delete existing tasks. Please try again.');
+                }
+            });
+
+            // close the modalTask
+            $("#taskListModal").modal("hide");
+
+            // clear the wateringTasksList
+            $('#wateringTasksList').empty();
+            
+        });
+
+
+
+        
+
 
         // Create Sortable.js instance for the watering tasks list
         Sortable.create(wateringTasksList, {
@@ -147,17 +252,6 @@ $(document).ready(function() {
                 itemEl.appendChild(removeBtn);
             }
         });
-
-        // Load the tasks from the server
-        if(typeof loadTasks === 'function'){
-            console.log('loadTasks is a function');
-            loadTasks(scheduleId);
-        } else {
-            console.log('loadTasks is not a function!');
-        }
-        
-
-
     });
 
     // Event handlers for "Edit Schedule" buttons
@@ -184,46 +278,71 @@ $(document).ready(function() {
     });
 });
 
-// Function to get schedules
 function getSchedules() {
-    $.ajax({
-        url: '/schedules', // your endpoint to get schedules
-        type: 'GET',
-        success: function(schedules) {
-            // Clear the table
-            $("#schedules-table").empty();
 
-            // Add each schedule to the table
-            schedules.forEach(schedule => {
-                $("#schedules-table").append(`
-                    <tr data-id="${schedule.id}">
-                        <td>${schedule.name}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info task-list-btn">Task List</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-info edit-schedule-btn" data-schedule-id="${schedule.id}">
-                                Edit Schedule
-                            </button>
-                        </td>
-                        <td>${schedule.nextRunTime}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" data-schedule-id="${schedule.id}">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger btn-delete-schedule" data-schedule-id="${schedule.id}">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                `);
-            });
-        },
-        error: function(error) {
-            console.log(error);
-        }
+    console.log("Getting schedules");
+
+    //clear the table
+    $("#schedules-table tbody").empty();
+
+    $.ajax({
+      url: '/schedules',
+      type: 'GET',
+      success: function(schedules) {
+  
+        // Clear table
+        $("#schedules-table tbody").empty(); 
+  
+        schedules.forEach(function(schedule) {
+  
+            // Row
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', schedule.id);
+
+            console.log("loading schedule id: " + schedule.id);
+    
+            // Cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = schedule.name;
+    
+            const taskListCell = document.createElement('td');
+            const taskListBtn = document.createElement('button');
+            taskListBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
+            taskListBtn.setAttribute('data-id', schedule.id);
+            taskListBtn.textContent = 'Task List';
+            taskListCell.appendChild(taskListBtn);
+
+            //debug button info to console
+            console.log("taskListBtn: " + taskListBtn);
+            console.log("taskListBtn data-id: " + taskListBtn.getAttribute('data-id'));
+
+    
+            const editCell = document.createElement('td');
+            // Create edit button
+    
+            const timeCell = document.createElement('td');
+            timeCell.textContent = schedule.nextRunTime;
+    
+            const actionCell = document.createElement('td');
+            // Create action buttons
+    
+            // Append cells to row
+            row.appendChild(nameCell);
+            row.appendChild(taskListCell);
+            row.appendChild(editCell);
+            row.appendChild(timeCell);
+            row.appendChild(actionCell);
+    
+            // Append row to table
+            $('#schedules-table tbody').append(row);
+  
+        });
+  
+      }
+  
     });
-}
+  
+  }
 
 // Function to get schedule details
 function getScheduleDetails(scheduleId) {
@@ -391,48 +510,6 @@ async function loadTasks(scheduleId) {
 
 }
 
-
-save.addEventListener('click', function(e) {
-
-    var items = document.querySelectorAll('#wateringTasksList li');
-    var tasks = [];
-    for (var i = 0; i < items.length; i++) {
-        tasks.push({
-            duration: items[i].querySelector('.time-input').value,
-            schedule_id: 1,
-            task_order: i,
-            sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
-        });
-    }
-
-    let scheduleId = $(this).data("schedule-id");
-
-    console.log("Delete scheduleId: " + scheduleId);
-
-    // Delete existing tasks for the associated scheduleId
-    $.ajax({
-        url: "/watering_tasks/" + scheduleId,
-        method: "DELETE",
-        contentType: "application/json",
-        success: function(response) {
-            console.log(response);
-
-            // After successful deletion, proceed with saving the updated tasks
-            saveWateringTasks(tasks,scheduleId);
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-            alert('Failed to delete existing tasks. Please try again.');
-        }
-    });
-    
-    // close the taskListModal
-    $("#taskListModal").modal("hide");
-
-    // clear the wateringTasksList
-    $('#wateringTasksList').empty();
-
-});
 
 
 function saveWateringTasks(tasks, scheduleId) {

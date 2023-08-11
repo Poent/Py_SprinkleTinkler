@@ -35,8 +35,12 @@ def delete_watering_tasks(schedule_id):
 @watering_task_bp.route('/watering_tasks/<int:schedule_id>', methods=['POST'])
 def save_watering_tasks(schedule_id):
     tasks = request.get_json()
+    print("POST /watering_tasks/<int:schedule_id> called.")
+    print("schedule_id: ", schedule_id)
     save_new_watering_tasks(schedule_id, tasks)
-    return jsonify({'message': 'Watering tasks saved successfully'}), 200
+    return jsonify({'message': f'Watering tasks for schedule_id {schedule_id} saved successfully'}), 200
+
+
 
 # Business logic functions
 def fetch_all_watering_tasks():
