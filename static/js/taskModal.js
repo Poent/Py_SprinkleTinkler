@@ -1,8 +1,12 @@
 $(document).ready(function(){
+
+    // Get the schedule id from the button's data attribute
     $.getJSON("/sprinklers", function(data){
         // Empty the list first
         $("#sprinklerList").empty();
         
+        console.log("creating sortable list");
+
         // Populate the list with data from the server
         $.each(data, function(index, sprinkler){
             var li = $("<li>").text(sprinkler.name).addClass("sortable-item list-group-item").attr("data-id", sprinkler.id);
@@ -31,6 +35,10 @@ $("#edit-tasks-btn").click(function(){
     // Show the modal
     $("#taskModal").modal("show");
 
+    //debug to console
+    console.log("creating sortable list");
+
+    // Create Sortable.js instance
     Sortable.create(wateringTasksList, {
         group: 'shared',
         animation: 150,
@@ -142,9 +150,13 @@ save.addEventListener('click', function(e) {
         });
     }
 
+    let scheduleId = $(this).data("schedule-id");
+
+    console.log("Delete scheduleId: " + scheduleId);
+
     // Delete existing tasks for the associated scheduleId
     $.ajax({
-        url: "/watering_tasks/" + 
+        url: "/watering_tasks/" + scheduleId,
         method: "DELETE",
         contentType: "application/json",
         success: function(response) {
