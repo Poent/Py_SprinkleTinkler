@@ -9,6 +9,8 @@ from models import db, Schedule, Sprinkler, WateringTask
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///schedules.db'
+app.config['SQLALCHEMY_ECHO'] = True
+
 
 migrate = Migrate(app, db)
 db.init_app(app)

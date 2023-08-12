@@ -105,5 +105,9 @@ def update_schedule_details(schedule_id, data):
     return schedule
 
 def delete_schedule_by_id(schedule_id):
-    Schedule.query.filter_by(id=schedule_id).delete()
-    db.session.commit()
+    schedule = Schedule.query.get(schedule_id)
+    print('Deleting schedule ' + str(schedule_id))
+    if schedule:
+        db.session.delete(schedule)
+        db.session.commit()
+
