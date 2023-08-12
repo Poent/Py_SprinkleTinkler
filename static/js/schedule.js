@@ -9,54 +9,6 @@ $(document).ready(function() {
     // Get schedules when document is ready
     getSchedules();
 
-    // event handler for the save button
-    $("#saveBtn").click(function() {
-        // log to the console
-        console.log("Save button clicked");
-
-        // get the schedule id from the save button
-        let scheduleId = $(this).data("id");
-
-        console.log("Save scheduleId: " + scheduleId);
-
-        // get the list of tasks
-        var items = document.querySelectorAll('#wateringTasksList li');
-        var tasks = [];
-        for (var i = 0; i < items.length; i++) {
-            tasks.push({
-                duration: items[i].querySelector('.time-input').value,
-                schedule_id: scheduleId,
-                task_order: i,
-                sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
-            });
-        }
-
-
-        // Delete existing tasks for the associated scheduleId
-        $.ajax({
-            url: "/watering_tasks/" + scheduleId,
-            method: "DELETE",
-            contentType: "application/json",
-            success: function(response) {
-                console.log(response);
-
-                // After successful deletion, proceed with saving the updated tasks
-                saveWateringTasks(tasks, scheduleId);
-            },
-            error: function(xhr, status, error) {
-                console.error(error);
-                alert('Failed to delete existing tasks. Please try again.');
-            }
-        });
-
-        // close the modalTask
-        $("#taskListModal").modal("hide");
-
-        // clear the wateringTasksList
-        $('#wateringTasksList').empty();
-
-    });
-    
     // Add Schedule button click event
     $("#add-schedule-btn").click(function() {
         // log to the console
@@ -85,172 +37,6 @@ $(document).ready(function() {
         editSchedule(scheduleId);
     });
     
-    // Event handlers for "Edit Task"
-    $("#schedules-table").on("click", ".task-list-btn", function(e) {
-        e.stopPropagation();  // Prevent triggering the row click event
-
-        // Get the schedule id from the button's data attribute
-        const button = $(this);
-        const scheduleId = button.data("id");
-
-
-        console.log("Edit Task button clicked for schedule " + scheduleId);
-        
-        // Open the modal to edit the watering task with this ID
-        $("#taskListModal").modal("show");
-
-
-        // update the modal header to include the schedule id
-        console.log('updating task list header');
-        const taskModalHeader = document.getElementById('task-modal-header');
-        taskModalHeader.textContent = 'Schedule ' + scheduleId + ' task editor';
-
-
-        // Get the schedule id from the button's data attribute
-        $.getJSON("/sprinklers", function(data){
-            // Empty the list first
-            $("#sprinklerList").empty();
-            
-            console.log("creating sortable list");
-
-            // Populate the list with data from the server
-            $.each(data, function(index, sprinkler){
-                var li = $("<li>").text(sprinkler.name).addClass("sortable-item list-group-item").attr("data-id", sprinkler.id);
-                $("#sprinklerList").append(li);
-            });
-
-            // Create Sortable.js instance for the sprinkler list after the list is populated
-            Sortable.create(sprinklerList, {
-                animation: 150,
-                group: {
-                    name: 'shared',
-                    pull: 'clone',
-                    put: false,
-                    revertClone: true
-                }
-            });
-
-            console.log("loading tasks for schedule " + scheduleId);
-            loadTasks(scheduleId);
-        });
-
-        // check if the save button already exists. if so, remove it (to prevent duplicates)
-        if (document.getElementById('saveTaskListBtn')) {
-            console.log('save button already exists');
-            // remove the existing save button
-            document.getElementById('saveTaskListBtn').remove();
-        }
-
-        // create the save button
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Save';
-        saveBtn.classList.add('btn', 'btn-primary', 'm-2');
-        saveBtn.setAttribute('id', 'saveTaskListBtn');
-        saveBtn.setAttribute('data-id', scheduleId);
-        saveBtn.setAttribute('data-dismiss', 'modal');
-        saveBtn.setAttribute('aria-label', 'Close');
-        saveBtn.setAttribute('type', 'button');
-
-        // add the save button to the modal body
-        const modalBody = document.getElementById('task-modal-body');
-        modalBody.appendChild(saveBtn);
-
-        // Event handler for "Save" button
-        saveBtn.addEventListener('click', function(e) {
-            var items = document.querySelectorAll('#wateringTasksList li');
-            var tasks = [];
-            for (var i = 0; i < items.length; i++) {
-                tasks.push({
-                    duration: items[i].querySelector('.time-input').value,
-                    schedule_id: scheduleId,
-                    task_order: i,
-                    sprinkler_id: items[i].getAttribute('data-id')  // Changed from 'sprinklers' to 'sprinkler_id'
-                });
-            }
-
-            // Delete existing tasks for the associated scheduleId
-            $.ajax({
-                url: "/watering_tasks/" + scheduleId,
-                method: "DELETE",
-                contentType: "application/json",
-                success: function(response) {
-                    console.log(response);
-
-                    // After successful deletion, proceed with saving the updated tasks
-                    saveWateringTasks(tasks, scheduleId);
-                },
-                error: function(xhr, status, error) {
-                    console.error(error);
-                    alert('Failed to delete existing tasks. Please try again.');
-                }
-            });
-
-            // close the modalTask
-            $("#taskListModal").modal("hide");
-
-            // clear the wateringTasksList
-            $('#wateringTasksList').empty();
-
-        });
-
-
-        // Create Sortable.js instance for the watering tasks list
-        Sortable.create(wateringTasksList, {
-            group: 'shared',
-            animation: 150,
-            onAdd: function (evt) {
-                var itemEl = evt.item;  // dragged HTMLElement
-
-                // create a div to hold item's content
-                var itemContent = document.createElement('div');
-                itemContent.innerHTML = itemEl.innerHTML;
-                itemEl.innerHTML = '';
-                itemEl.appendChild(itemContent);
-
-                // time input container
-                var timeContainer = document.createElement('div');
-                timeContainer.classList.add('m-2');
-
-                // time label
-                var timeLabel = document.createElement('span');
-                timeLabel.innerHTML = 'Runtime: ';
-                timeLabel.classList.add('time-label');
-                timeContainer.appendChild(timeLabel);
-
-                // time input field
-                var timeInput = document.createElement('input');
-                timeInput.type = "number";
-                timeInput.min = "1";
-                timeInput.value = "5";
-                timeInput.max = "60";
-                timeInput.placeholder = "Enter time in mins";
-                timeInput.classList.add('time-input');
-                timeContainer.appendChild(timeInput);
-
-                // help text
-                var helpText = document.createElement('small');
-                helpText.innerHTML = "Enter time in minutes";
-                helpText.classList.add('form-text', 'text-muted');
-                timeContainer.appendChild(helpText);
-
-
-                // add time container to item
-                itemEl.appendChild(timeContainer);
-
-                // remove button
-                var removeBtn = document.createElement('button');
-                removeBtn.innerHTML = 'X';
-                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
-                removeBtn.addEventListener('click', function(e) {
-                    itemEl.remove();
-                });
-
-                // add remove button to item
-                itemEl.appendChild(removeBtn);
-            }
-        });
-    });
-
     // Event handlers for "Edit Schedule" buttons
     $("#schedules-table").on("click", ".edit-schedule-btn", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
@@ -259,20 +45,25 @@ $(document).ready(function() {
         $("#editScheduleModal").modal("show");
     });
 
-    // Event handler for "Delete" button
+    // Event handler for "Delete-Schedule" button. 
     $("#schedules-table").on("click", ".btn-delete-schedule", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
         let scheduleId = $(this).closest("tr").data("id");
 
-        // Call the deleteSchedule function with scheduleId
-        deleteSchedule(scheduleId);
+        // confirm delete
+        if (confirm("Are you sure you want to delete schedule ID " + scheduleId + "?")) {
+            // Call the deleteSchedule function with scheduleId
+            deleteSchedule(scheduleId);
+        } else {
+            // do nothing
+        }
     });
-
 
     // go back to the index page
     $("#back").click(function() {
         window.location.href = "/";
     });
+
 });
 
 function getSchedules() {
@@ -302,6 +93,7 @@ function getSchedules() {
             const nameCell = document.createElement('td');
             nameCell.textContent = schedule.name;
     
+            // Create task list button
             const taskListCell = document.createElement('td');
             const taskListBtn = document.createElement('button');
             taskListBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
@@ -313,15 +105,25 @@ function getSchedules() {
             console.log("taskListBtn: " + taskListBtn);
             console.log("taskListBtn data-id: " + taskListBtn.getAttribute('data-id'));
 
-    
+            // Create edit schedule button
             const editCell = document.createElement('td');
-            // Create edit button
+            const editBtn = document.createElement('button');
+            editBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'edit-schedule-btn');
+            editBtn.setAttribute('data-id', schedule.id);
+            editBtn.textContent = 'Edit';
+            editCell.appendChild(editBtn);
+            
     
             const timeCell = document.createElement('td');
             timeCell.textContent = schedule.nextRunTime;
     
+            // Create delete schedule button
             const actionCell = document.createElement('td');
-            // Create action buttons
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
+            deleteBtn.setAttribute('data-id', schedule.id);
+            deleteBtn.textContent = 'Delete';
+            actionCell.appendChild(deleteBtn);
     
             // Append cells to row
             row.appendChild(nameCell);
@@ -442,85 +244,3 @@ function deleteSchedule(scheduleId) {
     });
 }
 
-async function loadTasks(scheduleId) {
-
-    const response = await fetch(`/watering_tasks/${scheduleId}`);
-    const tasks = await response.json();
-
-    // Clear the list first
-    $('#wateringTasksList').empty();
-
-    tasks.forEach(task => {
-
-        // Get sprinkler name
-        const sprinklerName = $(`#sprinklerList li[data-id=${task.sprinkler_id}]`).text();
-
-        // Create elements
-        const li = document.createElement('li');
-        const content = document.createElement('div');
-        const timeInput = document.createElement('input');
-        const label = document.createElement('span');
-        const helpText = document.createElement('small');
-        const timeContainer = document.createElement('div');
-
-
-        const removeBtn = document.createElement('button');
-        removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
-
-        // Add classes  
-        li.classList.add('sortable-item', 'time-label');
-        content.classList.add('task-content', 'm-2');
-        timeInput.classList.add('time-input', 'm-2');
-        label.classList.add('time-label');
-        helpText.classList.add('form-text', 'text-muted');
-
-
-        // Set content
-        content.textContent = `${sprinklerName}`;
-        timeInput.type = 'number';
-        timeInput.min = 1;
-        timeInput.max = 60;
-        timeInput.value = task.duration;
-        label.textContent = 'Runtime: ';
-        helpText.textContent = 'Enter time in minutes';
-        removeBtn.textContent = 'Remove';
-
-        // Append elements  
-        li.appendChild(content);
-        timeContainer.appendChild(label);
-        timeContainer.appendChild(timeInput);
-        timeContainer.appendChild(helpText);
-        li.appendChild(timeContainer);
-        li.appendChild(removeBtn);
-
-        // Set attributes
-        li.dataset.id = task.sprinkler_id;
-
-        // Event listeners
-        removeBtn.addEventListener('click', () => {
-            li.remove();
-        });
-
-        $('#wateringTasksList').append(li);
-
-    });
-
-}
-
-
-function saveWateringTasks(tasks, scheduleId) {
-    $.ajax({
-        url: "/watering_tasks/" + scheduleId,
-        method: "POST",
-        data: JSON.stringify(tasks),
-        contentType: "application/json",
-        success: function(response) {
-            console.log(response);
-            alert('Tasks saved successfully!');
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-            alert('Failed to save tasks. Please try again.');
-        }
-    });
-}

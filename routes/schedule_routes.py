@@ -45,6 +45,7 @@ def update_schedule(schedule_id):
         return jsonify({'error': 'Schedule not found or ID conflict'}), 404
     return jsonify(updated_schedule.to_dict())
 
+# delete a schedule by id
 @schedule_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
 def delete_schedule(schedule_id):
     delete_schedule_by_id(schedule_id)

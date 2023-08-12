@@ -46,9 +46,15 @@ def get_events():
     return jsonify({'events': events})
 
 
+# test route
 @app.route('/test')
 def test():
     return render_template('test.html')
+
+# test route 2
+@app.route('/test2')
+def test2():
+    return render_template('test2.html')
 
 if __name__ == '__main__':
 
