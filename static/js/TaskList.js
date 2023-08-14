@@ -205,7 +205,7 @@ $(document).ready(function() {
                 // remove button
                 var removeBtn = document.createElement('button');
                 removeBtn.innerHTML = 'X';
-                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
+                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
                 removeBtn.addEventListener('click', function(e) {
                     itemEl.remove();
                 });
@@ -244,7 +244,7 @@ async function loadTasks(scheduleId) {
 
         // Create remove button
         const removeBtn = document.createElement('button');
-        removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
+        removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
 
         // Add classes  
         li.classList.add('sortable-item', 'time-label');

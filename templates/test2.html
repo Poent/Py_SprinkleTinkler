@@ -18,8 +18,8 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Schedule</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="schedule-modal-header">Edit Schedule</h5>
+                    <button type="button" id="edit-schedule-btn" class="close" data-schedule-id="1" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -30,25 +30,38 @@
                         <option value="alternate">Every Other Day</option>
                         <option value="custom">Custom</option>
                     </select>
-                    <div id="alternateDays" class="mt-3" style="display: none;">
-                        <label>Odd/Even Days:</label>
-                        <div>
-                            <input type="radio" id="oddDays" name="oddEven" value="odd">
-                            <label for="oddDays">Odd Days</label>
-                            <input type="radio" id="evenDays" name="oddEven" value="even">
-                            <label for="evenDays">Even Days</label>
+                    <div id="customDays" class="mt-3" style="display: none;">
+                        <!-- Switches for all days -->
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="sunday">
+                            <label class="custom-control-label" for="sunday">Sunday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="monday">
+                            <label class="custom-control-label" for="monday">Monday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="tuesday">
+                            <label class="custom-control-label" for="tuesday">Tuesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="wednesday">
+                            <label class="custom-control-label" for="wednesday">Wednesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="thursday">
+                            <label class="custom-control-label" for="thursday">Thursday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="friday">
+                            <label class="custom-control-label" for="friday">Friday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="saturday">
+                            <label class="custom-control-label" for="saturday">Saturday</label>
                         </div>
                     </div>
-                    <div id="customDays" class="mt-3" style="display: none;">
-                        <!-- Add checkboxes for all days -->
-                        <input type="checkbox" id="monday" name="monday"><label for="monday">Monday</label><br>
-                        <input type="checkbox" id="tuesday" name="tuesday"><label for="tuesday">Tuesday</label><br>
-                        <input type="checkbox" id="wednesday" name="wednesday"><label for="wednesday">Wednesday</label><br>
-                        <input type="checkbox" id="thursday" name="thursday"><label for="thursday">Thursday</label><br>
-                        <input type="checkbox" id="friday" name="friday"><label for="friday">Friday</label><br>
-                        <input type="checkbox" id="saturday" name="saturday"><label for="saturday">Saturday</label><br>
-                        <input type="checkbox" id="sunday" name="sunday"><label for="sunday">Sunday</label><br>
-                    </div>
+                    
                     <label for="startTime" class="mt-3">Start Time:</label>
                     <input type="time" id="startTime" class="form-control">
                 </div>
@@ -65,46 +78,49 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         function goBack() {
-            // You can add the logic to go back to the previous page or dashboard here
+            // back to the previous page
+            window.history.back();
         }
 
         function editSchedule() {
+
+            // get the schedule-id from the button
+            var scheduleId = document.getElementById("edit-schedule-btn").getAttribute("data-schedule-id");
+            console.log("scheduleId: " + scheduleId);
+
+            // update the header of the modal with the scheduleId
+            document.querySelector('.schedule-modal-header').innerText = "Edit Schedule " + scheduleId;
+
             $('#editScheduleModal').modal('show');
+
         }
 
         function saveSchedule() {
             var frequency = document.getElementById("frequency").value;
             var startTime = document.getElementById("startTime").value;
-            var oddEven = document.getElementById("oddEvenSlider").value === "0" ? "Odd" : "Even";
             var days = [];
             if (frequency === 'custom') {
                 // Add selected days
-                ['monday', 'tuesday', /* ... other days ... */].forEach(day => {
+                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => {
                     if (document.getElementById(day).checked) days.push(day.charAt(0).toUpperCase() + day.slice(1));
                 });
             }
             // Use this data to update the actual sprinkler system
-            var scheduleData = { frequency, startTime, oddEven, days };
+            var scheduleData = { frequency, startTime, days };
+            
+            // TODO: Send scheduleData to the server here
+
             console.log(scheduleData);
             document.getElementById("status").innerText = "Scheduled to run at " + startTime;
             $('#editScheduleModal').modal('hide');
         }
 
         document.getElementById("frequency").addEventListener('change', function () {
-            if (this.value === 'alternate') {
-                document.getElementById("alternateDays").style.display = 'block';
-                document.getElementById("customDays").style.display = 'none';
-            } else if (this.value === 'custom') {
-                document.getElementById("alternateDays").style.display = 'none';
+            if (this.value === 'custom') {
                 document.getElementById("customDays").style.display = 'block';
             } else {
-                document.getElementById("alternateDays").style.display = 'none';
                 document.getElementById("customDays").style.display = 'none';
             }
-        });
-
-        document.getElementById("oddEvenSlider").addEventListener('input', function() {
-            document.getElementById("sliderLabel").innerText = this.value === "0" ? "Odd Days" : "Even Days";
         });
     </script>
 </body>

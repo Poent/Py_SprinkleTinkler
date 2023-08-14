@@ -13,6 +13,7 @@ class Schedule(db.Model):
     start_time = db.Column(db.Time, nullable=True)
     last_run = db.Column(DateTime, nullable=True)  # New field
     next_run = db.Column(DateTime, nullable=True)  # New field
+    custom_days = db.Column(db.String(13), nullable=True) # Example value: 'MTWTFSS', 'M-W-F--'
     watering_tasks = db.relationship('WateringTask', backref='schedule', lazy=True, cascade='all,delete-orphan')
 
     def to_dict(self):
