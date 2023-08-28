@@ -83,37 +83,116 @@
         }
 
         function editSchedule() {
-
-            // get the schedule-id from the button
+            // Get the schedule-id from the button
             var scheduleId = document.getElementById("edit-schedule-btn").getAttribute("data-schedule-id");
-            console.log("scheduleId: " + scheduleId);
+            console.log("Editing scheduleId: " + scheduleId);
 
-            // update the header of the modal with the scheduleId
+            // Update the header of the modal with the scheduleId
             document.querySelector('.schedule-modal-header').innerText = "Edit Schedule " + scheduleId;
 
-            $('#editScheduleModal').modal('show');
+            // Fetch existing data for the schedule by ID (assuming your API endpoint follows this format)
+            fetch('/schedules/' + scheduleId)
+            .then(response => response.json())
+            .then(data => {
 
+                // Debug to see what is being returned
+                console.log('Schedule data received from FETCH:', data);
+
+                // Update the input fields with existing data
+                document.getElementById("frequency").value = data.frequency || 'daily';
+                document.getElementById("startTime").value = data.start_time || '00:00';
+
+                // Show or hide the customDays section based on the frequency
+                if (data.frequency === 'custom') {
+                    document.getElementById("customDays").style.display = 'block';
+                } else {
+                    document.getElementById("customDays").style.display = 'none';
+                }
+
+                // Reset all checkboxes to unchecked before setting them based on the database values
+                var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                days.forEach(function(day) {
+                    document.getElementById(day).checked = false;
+                });
+
+                // Check the appropriate checkboxes for customDays based on the database
+                if (data.custom_days) {
+                    var customDaysArray = data.custom_days.split(",");
+                    customDaysArray.forEach(function(day) {
+                        document.getElementById(day).checked = true;
+                    });
+                }
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error fetching schedule:', error);
+            });
+
+            // Display the modal
+            $('#editScheduleModal').modal('show');
         }
+
+
 
         function saveSchedule() {
-            var frequency = document.getElementById("frequency").value;
-            var startTime = document.getElementById("startTime").value;
-            var days = [];
-            if (frequency === 'custom') {
-                // Add selected days
-                ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => {
-                    if (document.getElementById(day).checked) days.push(day.charAt(0).toUpperCase() + day.slice(1));
-                });
-            }
-            // Use this data to update the actual sprinkler system
-            var scheduleData = { frequency, startTime, days };
-            
-            // TODO: Send scheduleData to the server here
+            // Get the schedule-id from the button
+            var scheduleId = document.getElementById("edit-schedule-btn").getAttribute("data-schedule-id");
 
-            console.log(scheduleData);
-            document.getElementById("status").innerText = "Scheduled to run at " + startTime;
+            // Debug to see what is being sent
+            console.log("frequency: " + frequency.value);
+            console.log("startTime: " + startTime.value);
+            console.log("scheduleId: " + scheduleId);
+
+            // Get the custom days selected when frequency is 'custom'
+            var customDays = "";
+            if (frequency.value === 'custom') {
+                var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                days.forEach(function(day) {
+                    var checkbox = document.getElementById(day);
+                    if (checkbox.checked) {
+                        customDays += day + ",";
+                    }
+                });
+                if (customDays) {
+                    customDays = customDays.slice(0, -1);  // Remove trailing comma
+                }
+            }
+            console.log("customDays: " + customDays);
+
+            // Create request data
+            var requestData = {
+                frequency: frequency.value,
+                start_time: startTime.value,
+                custom_days: customDays // Include custom days string here
+
+                // you can add other parameters here if needed
+            };
+
+            // Convert to JSON
+            var jsonData = JSON.stringify(requestData);
+
+            // Make PUT request
+            fetch('/schedules/' + scheduleId, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle successful response here
+                console.log('Updated schedule:', data);
+                document.getElementById("status").innerText = "Scheduled to run at " + startTime.value;
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error updating schedule:', error);
+            });
+
             $('#editScheduleModal').modal('hide');
         }
+
 
         document.getElementById("frequency").addEventListener('change', function () {
             if (this.value === 'custom') {

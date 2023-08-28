@@ -22,9 +22,10 @@ class Schedule(db.Model):
             'name': self.name,
             'frequency': self.frequency,
             'description': self.description,
-            'start_time': str(self.start_time),
+            'start_time': self.start_time.strftime('%H:%M') if self.start_time else None,
             'last_run': self.last_run.isoformat() if self.last_run else None,  # Convert to ISO format
             'next_run': self.next_run.isoformat() if self.next_run else None,  # Convert to ISO format
+            'custom_days': self.custom_days,
             'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
 

@@ -39,11 +39,17 @@ def get_schedules():
 
 @schedule_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
 def update_schedule(schedule_id):
+    #debug to console
+    print('Updating schedule via PUT. ID: ' + str(schedule_id))
+
     data = request.get_json(force=True)
     updated_schedule = update_schedule_details(schedule_id, data)
     if not updated_schedule:
         return jsonify({'error': 'Schedule not found or ID conflict'}), 404
     return jsonify(updated_schedule.to_dict())
+
+# update a schedule's frequency by id 
+
 
 # delete a schedule by id
 @schedule_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
@@ -67,40 +73,36 @@ def create_new_schedule(data):
     return new_schedule
 
 def get_schedule_by_id(schedule_id):
+    print('[GET] Getting schedule ' + str(schedule_id))
     return Schedule.query.get(schedule_id)
 
 def update_schedule_details(schedule_id, data):
+
+    print('Updating schedule ' + str(schedule_id))
+    print('data: ' + str(data))
+
     schedule = Schedule.query.get(schedule_id)
     if not schedule:
         return None
 
     schedule.name = data.get('name', schedule.name)
     schedule.description = data.get('description', schedule.description)
-    start_time_str = data.get('start_time', None)
-    if start_time_str:
-        schedule.start_time = datetime.strptime(start_time_str, "%H:%M:%S").time()
     schedule.frequency = data.get('frequency', schedule.frequency)
 
-    watering_tasks_data = data.get('watering_tasks', [])
-    if watering_tasks_data:
-        for wt_data in watering_tasks_data:
-            watering_task = WateringTask.query.get(wt_data['id'])
-            if watering_task:
-                watering_task.duration = wt_data.get('duration', watering_task.duration)
-                sprinkler_ids = wt_data.get('sprinkler_ids', [])
-                watering_task.sprinklers.clear()
-                for id in sprinkler_ids:
-                    sprinkler = Sprinkler.query.get(id)
-                    if sprinkler:
-                        watering_task.sprinklers.append(sprinkler)
-            else:
-                sprinkler_ids = wt_data.get('sprinkler_ids', [])
-                new_watering_task = WateringTask(duration=wt_data['duration'], schedule_id=schedule.id)
-                for id in sprinkler_ids:
-                    sprinkler = Sprinkler.query.get(id)
-                    if sprinkler:
-                        new_watering_task.sprinklers.append(sprinkler)
-                db.session.add(new_watering_task)
+    # Debug: Print old and new custom_days
+    print(f"Old custom_days: {schedule.custom_days}")
+    schedule.custom_days = data.get('custom_days', schedule.custom_days)
+    print(f"New custom_days: {schedule.custom_days}")
+
+    # get the start time from the data and convert it to a datetime object
+    start_time = data.get('start_time', schedule.start_time)
+    if start_time:
+        # Debug: Print old and new start_time
+        print(f"Old start_time: {schedule.start_time}")
+        start_time = datetime.strptime(start_time, '%H:%M').time()
+        schedule.start_time = start_time
+        print(f"New start_time: {schedule.start_time}")
+
     db.session.commit()
     return schedule
 
