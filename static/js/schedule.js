@@ -88,34 +88,35 @@ function getSchedules() {
             row.setAttribute('data-id', schedule.id);
 
             console.log("loading schedule id: " + schedule.id);
+
+            const idCell = document.createElement('td');
+            idCell.textContent = schedule.id;
     
             // Cells
             const nameCell = document.createElement('td');
             nameCell.textContent = schedule.name;
     
             // Create task list button
-            const taskListCell = document.createElement('td');
-            const taskListBtn = document.createElement('button');
-            taskListBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
-            taskListBtn.setAttribute('data-id', schedule.id);
-            taskListBtn.textContent = 'Task List';
-            taskListCell.appendChild(taskListBtn);
-
-            //debug button info to console
-            console.log("taskListBtn: " + taskListBtn);
-            console.log("taskListBtn data-id: " + taskListBtn.getAttribute('data-id'));
-
-            // Create edit schedule button
-            const editCell = document.createElement('td');
             const editBtn = document.createElement('button');
-            editBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'edit-schedule-btn');
+            editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
             editBtn.setAttribute('data-id', schedule.id);
             editBtn.textContent = 'Edit';
-            editCell.appendChild(editBtn);
+
+
+            //debug button info to console
+            console.log("editBtn: " + editBtn);
+            console.log("editBtn data-id: " + editBtn.getAttribute('data-id'));
+
+            // Create the frequency cell
+            const frequencyCell = document.createElement('td');
+            frequencyCell.textContent = schedule.frequency;
             
-    
-            const timeCell = document.createElement('td');
-            timeCell.textContent = schedule.nextRunTime;
+            // Create the start time cell
+            const startTimeCell = document.createElement('td');
+            startTimeCell.textContent = schedule.start_time;
+            
+            const nextTimeCell = document.createElement('td');
+            nextTimeCell.textContent = schedule.next_run;
     
             // Create delete schedule button
             const actionCell = document.createElement('td');
@@ -123,13 +124,16 @@ function getSchedules() {
             deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
             deleteBtn.setAttribute('data-id', schedule.id);
             deleteBtn.textContent = 'Delete';
+
+            actionCell.appendChild(editBtn);
             actionCell.appendChild(deleteBtn);
     
             // Append cells to row
+            row.appendChild(idCell);
             row.appendChild(nameCell);
-            row.appendChild(taskListCell);
-            row.appendChild(editCell);
-            row.appendChild(timeCell);
+            row.appendChild(frequencyCell);
+            row.appendChild(startTimeCell);
+            row.appendChild(nextTimeCell);
             row.appendChild(actionCell);
     
             // Append row to table
