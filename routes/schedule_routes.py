@@ -67,6 +67,7 @@ def get_all_watering_tasks():
     return WateringTask.query.all()
 
 def create_new_schedule(data):
+    print('[POST] Creating new schedule')
     new_schedule = Schedule(name=data['name'])
     db.session.add(new_schedule)
     db.session.commit()
