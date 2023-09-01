@@ -1,13 +1,14 @@
+
+var sprinklerList = document.getElementById('sprinklerList');
+var wateringTasksList = document.getElementById('wateringTasksList');
+var save = document.getElementById('save');
+var back = document.getElementById('back');
+
+
 $(document).ready(function() {
     // Get schedules when document is ready
     getSchedules();
 
-    // Add event listener to the table rows
-    $("#schedules-table").on("click", "tr", function() {
-        let scheduleId = $(this).data("id");
-        getScheduleDetails(scheduleId);
-    });
-    
     // Add Schedule button click event
     $("#add-schedule-btn").click(function() {
         // log to the console
@@ -36,76 +37,6 @@ $(document).ready(function() {
         editSchedule(scheduleId);
     });
     
-    // Event handlers for "Edit Task"
-    $("#schedules-table").on("click", ".task-list-btn", function(e) {
-        e.stopPropagation();  // Prevent triggering the row click event
-
-        let scheduleId = $(this).closest("tr").data("id");
-        
-        // Open the modal to edit the watering task with this ID
-        $("#taskListModal").modal("show");
-
-        Sortable.create(wateringTasksList, {
-            group: 'shared',
-            animation: 150,
-            onAdd: function (evt) {
-                var itemEl = evt.item;  // dragged HTMLElement
-
-                // create a div to hold item's content
-                var itemContent = document.createElement('div');
-                itemContent.innerHTML = itemEl.innerHTML;
-                itemEl.innerHTML = '';
-                itemEl.appendChild(itemContent);
-
-                // time input container
-                var timeContainer = document.createElement('div');
-                timeContainer.classList.add('m-2');
-
-                // time label
-                var timeLabel = document.createElement('span');
-                timeLabel.innerHTML = 'Runtime: ';
-                timeLabel.classList.add('time-label');
-                timeContainer.appendChild(timeLabel);
-
-                // time input field
-                var timeInput = document.createElement('input');
-                timeInput.type = "number";
-                timeInput.min = "1";
-                timeInput.value = "5";
-                timeInput.max = "60";
-                timeInput.placeholder = "Enter time in mins";
-                timeInput.classList.add('time-input');
-                timeContainer.appendChild(timeInput);
-
-                // help text
-                var helpText = document.createElement('small');
-                helpText.innerHTML = "Enter time in minutes";
-                helpText.classList.add('form-text', 'text-muted');
-                timeContainer.appendChild(helpText);
-
-
-                // add time container to item
-                itemEl.appendChild(timeContainer);
-
-                // remove button
-                var removeBtn = document.createElement('button');
-                removeBtn.innerHTML = 'X';
-                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn');
-                removeBtn.addEventListener('click', function(e) {
-                    itemEl.remove();
-                });
-
-                // add remove button to item
-                itemEl.appendChild(removeBtn);
-            }
-        });
-
-        // Load the tasks from the server
-        loadTasks(scheduleId);
-
-
-    });
-
     // Event handlers for "Edit Schedule" buttons
     $("#schedules-table").on("click", ".edit-schedule-btn", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
@@ -114,87 +45,107 @@ $(document).ready(function() {
         $("#editScheduleModal").modal("show");
     });
 
-    // Event handler for "Delete" button
+    // Event handler for "Delete-Schedule" button. 
     $("#schedules-table").on("click", ".btn-delete-schedule", function(e) {
         e.stopPropagation();  // Prevent triggering the row click event
         let scheduleId = $(this).closest("tr").data("id");
 
-        // Call the deleteSchedule function with scheduleId
-        deleteSchedule(scheduleId);
+        // confirm delete
+        if (confirm("Are you sure you want to delete schedule ID " + scheduleId + "?")) {
+            // Call the deleteSchedule function with scheduleId
+            deleteSchedule(scheduleId);
+        } else {
+            // do nothing
+        }
     });
-
 
     // go back to the index page
     $("#back").click(function() {
         window.location.href = "/";
     });
+
 });
 
-
-
-// Function to get schedules
 function getSchedules() {
+
+    console.log("Getting schedules");
+
+    //clear the table
+    $("#schedules-table tbody").empty();
+
     $.ajax({
-        url: '/schedules', // your endpoint to get schedules
-        type: 'GET',
-        success: function(schedules) {
-            // Clear the table
-            $("#schedules-table").empty();
+      url: '/schedules',
+      type: 'GET',
+      success: function(schedules) {
+  
+        // Clear table
+        $("#schedules-table tbody").empty(); 
+  
+        schedules.forEach(function(schedule) {
+  
+            // Row
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', schedule.id);
 
-            // Add each schedule to the table
-            schedules.forEach(schedule => {
-                $("#schedules-table").append(`
-                    <tr data-id="${schedule.id}">
-                        <td>${schedule.name}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info task-list-btn">Task List</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-info edit-schedule-btn" data-schedule-id="${schedule.id}">
-                                Edit Schedule
-                            </button>
-                        </td>
-                        <td>${schedule.nextRunTime}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" data-schedule-id="${schedule.id}">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger btn-delete-schedule" data-schedule-id="${schedule.id}">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                `);
-            });
-        },
-        error: function(error) {
-            console.log(error);
-        }
+            console.log("loading schedule id: " + schedule.id);
+
+            const idCell = document.createElement('td');
+            idCell.textContent = schedule.id;
+    
+            // Cells
+            const nameCell = document.createElement('td');
+            nameCell.textContent = schedule.name;
+    
+            // Create task list button
+            const editBtn = document.createElement('button');
+            editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
+            editBtn.setAttribute('data-id', schedule.id);
+            editBtn.textContent = 'Edit';
+
+
+            //debug button info to console
+            console.log("editBtn: " + editBtn);
+            console.log("editBtn data-id: " + editBtn.getAttribute('data-id'));
+
+            // Create the frequency cell
+            const frequencyCell = document.createElement('td');
+            frequencyCell.textContent = schedule.frequency;
+            
+            // Create the start time cell
+            const startTimeCell = document.createElement('td');
+            startTimeCell.textContent = schedule.start_time;
+            
+            const nextTimeCell = document.createElement('td');
+            nextTimeCell.textContent = schedule.next_run;
+    
+            // Create delete schedule button
+            const actionCell = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
+            deleteBtn.setAttribute('data-id', schedule.id);
+            deleteBtn.textContent = 'Delete';
+
+            actionCell.appendChild(editBtn);
+            actionCell.appendChild(deleteBtn);
+    
+            // Append cells to row
+            row.appendChild(idCell);
+            row.appendChild(nameCell);
+            row.appendChild(frequencyCell);
+            row.appendChild(startTimeCell);
+            row.appendChild(nextTimeCell);
+            row.appendChild(actionCell);
+    
+            // Append row to table
+            $('#schedules-table tbody').append(row);
+  
+        });
+  
+      }
+  
     });
-}
-
-// Function to get schedule details
-function getScheduleDetails(scheduleId) {
-    $.ajax({
-        url: '/schedules/' + scheduleId, // your endpoint to get a single schedule
-        type: 'GET',
-        success: function(schedule) {
-            // Populate the modal with the schedule data
-            $("#scheduleModal .modal-body").html(`
-                <p>Name: ${schedule.name}</p>
-                <p>Watering Task: ${schedule.wateringTask}</p>
-                <p>Schedule: ${schedule.schedule}</p>
-                <p>Next Run Time: ${schedule.nextRunTime}</p>
-            `);
-
-            // Show the modal
-            $("#scheduleModal").modal("show");
-        },
-        error: function(error) {
-            console.log(error);
-        }
-    });
-}
+  
+  }
 
 // Function to add a schedule
 function addSchedule() {
@@ -273,3 +224,4 @@ function deleteSchedule(scheduleId) {
         }
     });
 }
+

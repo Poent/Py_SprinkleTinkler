@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.10.2/Sortable.min.js"></script>
+
+    <style>
+        .highlight {
+            background-color: #A9A9A9;
+        }
+
+        .sortable-item {
+            border: 1px solid #cccccc;
+            background-color: #f9f9f9;
+            cursor: move;
+            margin-bottom: 10px;
+            display: flex; /* Make this a flex container */
+            justify-content: space-between; /* Justify content to the space-between */
+            align-items: center; /* Align items to the center */
+        }
+
+        .time-label {
+            margin-left: 0;
+            padding: 0;
+            width: auto;
+        }
+
+        .time-input {
+            width: 60px; /* adjust as needed */
+            margin-left: 0px;
+            padding-left: 5px;
+        }
+
+        .remove-btn {
+            margin-left: 10px;
+        }
+
+        .task-content {
+            margin: 2;
+            padding: 2;
+        }
+
+        /* Add a border and minimum height to the list containers */
+        .list-group {
+            border: 2px dashed #cccccc;
+            min-height: 50px;
+            padding: 10px;
+        }
+        
+        .remove-btn {
+            float: right;
+            cursor: pointer;
+        }
+
+        .sortable-item:hover .remove-btn {
+            display: block;
+        }
+
+        .modal-dialog {
+            width: 80%;
+        }
+        .modal-document {
+            width: 90%;
+        }
+
+
+    </style>
+
+    <title>Sprinkler Controller</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Sprinkler Schedule</h1>
+        <button onclick="goBack()" class="btn btn-secondary">Back</button>
+        <button onclick="editSchedule()" class="btn btn-primary">Edit Schedule</button>
+        <h2>Status</h2>
+        <p id="status">Waiting to run...</p>
+    </div>
+    <div class="modal" tabindex="-1" role="dialog" id="editScheduleModal">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="schedule-modal-header">Edit Schedule</h5>
+                    <button type="button" id="edit-schedule-btn" class="close" data-schedule-id="1" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <label for="frequency">Frequency:</label>
+                    <select class="form-control" id="frequency">
+                        <option value="daily">Daily</option>
+                        <option value="alternate">Every Other Day</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <div id="customDays" class="mt-3" style="display: none;">
+                        <!-- Switches for all days -->
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="sunday">
+                            <label class="custom-control-label" for="sunday">Sunday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="monday">
+                            <label class="custom-control-label" for="monday">Monday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="tuesday">
+                            <label class="custom-control-label" for="tuesday">Tuesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="wednesday">
+                            <label class="custom-control-label" for="wednesday">Wednesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="thursday">
+                            <label class="custom-control-label" for="thursday">Thursday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="friday">
+                            <label class="custom-control-label" for="friday">Friday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="saturday">
+                            <label class="custom-control-label" for="saturday">Saturday</label>
+                        </div>
+                    </div>
+                    
+                    <label for="startTime" class="mt-3">Start Time:</label>
+                    <input type="time" id="startTime" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>Sprinkler List</h3>
+                        <ul id="sprinklerList" class="list-group"></ul>
+                    </div>
+        
+                    <div class="col-md-6">
+                        <h3>Watering Tasks</h3>
+                        <ul id="wateringTasksList" class="list-group">
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function goBack() {
+            // back to the previous page
+            window.history.back();
+        }
+
+        function editSchedule() {
+            // Get the schedule-id from the button
+            var scheduleId = document.getElementById("edit-schedule-btn").getAttribute("data-schedule-id");
+            console.log("Editing scheduleId: " + scheduleId);
+
+            // Update the header of the modal with the scheduleId
+            document.querySelector('.schedule-modal-header').innerText = "Edit Schedule " + scheduleId;
+
+            // Fetch existing data for the schedule by ID (assuming your API endpoint follows this format)
+            fetch('/schedules/' + scheduleId)
+            .then(response => response.json())
+            .then(data => {
+
+                // Debug to see what is being returned
+                console.log('Schedule data received from FETCH:', data);
+
+                // Update the input fields with existing data
+                document.getElementById("frequency").value = data.frequency || 'daily';
+                document.getElementById("startTime").value = data.start_time || '00:00';
+
+                // Show or hide the customDays section based on the frequency
+                if (data.frequency === 'custom') {
+                    document.getElementById("customDays").style.display = 'block';
+                } else {
+                    document.getElementById("customDays").style.display = 'none';
+                }
+
+                // Reset all checkboxes to unchecked before setting them based on the database values
+                var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                days.forEach(function(day) {
+                    document.getElementById(day).checked = false;
+                });
+
+                // Check the appropriate checkboxes for customDays based on the database
+                if (data.custom_days) {
+                    var customDaysArray = data.custom_days.split(",");
+                    customDaysArray.forEach(function(day) {
+                        document.getElementById(day).checked = true;
+                    });
+                }
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error fetching schedule:', error);
+            });
+
+            loadSprinklers(scheduleId);
+            loadTasks(scheduleId);
+
+            // Display the modal
+            $('#editScheduleModal').modal('show');
+        }
+
+
+
+        function saveSchedule() {
+            // Get the schedule-id from the button
+            var scheduleId = document.getElementById("edit-schedule-btn").getAttribute("data-schedule-id");
+
+            // Debug to see what is being sent
+            console.log("frequency: " + frequency.value);
+            console.log("startTime: " + startTime.value);
+            console.log("scheduleId: " + scheduleId);
+
+            // Get the custom days selected when frequency is 'custom'
+            var customDays = "";
+            if (frequency.value === 'custom') {
+                var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                days.forEach(function(day) {
+                    var checkbox = document.getElementById(day);
+                    if (checkbox.checked) {
+                        customDays += day + ",";
+                    }
+                });
+                if (customDays) {
+                    customDays = customDays.slice(0, -1);  // Remove trailing comma
+                }
+            }
+            console.log("customDays: " + customDays);
+
+            // Create request data
+            var requestData = {
+                frequency: frequency.value,
+                start_time: startTime.value,
+                custom_days: customDays // Include custom days string here
+
+                // you can add other parameters here if needed
+            };
+
+            // Convert to JSON
+            var jsonData = JSON.stringify(requestData);
+
+            // Make PUT request
+            fetch('/schedules/' + scheduleId, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle successful response here
+                console.log('Updated schedule:', data);
+                document.getElementById("status").innerText = "Scheduled to run at " + startTime.value;
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error updating schedule:', error);
+            });
+
+            $('#editScheduleModal').modal('hide');
+        }
+
+
+        document.getElementById("frequency").addEventListener('change', function () {
+            if (this.value === 'custom') {
+                document.getElementById("customDays").style.display = 'block';
+            } else {
+                document.getElementById("customDays").style.display = 'none';
+            }
+        });
+
+        // function to create a sortable.js list and load the sprinklers from the database
+        function loadSprinklers(scheduleId) {
+
+            // clear the list
+            document.getElementById('sprinklerList').innerHTML = '';
+
+            // Fetch sprinklers from the database
+            fetch('/sprinklers')
+            .then(response => response.json())
+            .then(data => {
+                // Debug to see what is being returned
+                console.log('Sprinkler data received from FETCH:', data);
+
+                // Create a list item for each sprinkler
+                data.forEach(function(sprinkler) {
+                    var sprinklerItem = document.createElement('li');
+                    sprinklerItem.className = 'list-group-item';
+                    sprinklerItem.classList.add('sortable-item');
+                    sprinklerItem.innerText = sprinkler.name;
+                    sprinklerItem.setAttribute('data-sprinkler-id', sprinkler.id);
+                    sprinklerItem.setAttribute('data-schedule-id', scheduleId);
+                    document.getElementById('sprinklerList').appendChild(sprinklerItem);
+                });
+
+                // Create a sortable list
+                Sortable.create(sprinklerList, {
+                    animation: 150,
+                    group: {
+                        name: 'sprinklerList',
+                        pull: 'clone',
+                        put: false,
+                        revertClone: true
+                    }
+                });
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error fetching sprinklers:', error);
+            });
+        }
+
+        // function to load the tasks from the database and create a sortable.js list
+        function loadTasks(scheduleId) {
+
+            // clear the list
+            document.getElementById('wateringTasksList').innerHTML = '';
+
+            // Fetch tasks from the database
+            fetch('/watering_tasks/' + scheduleId )
+            .then(response => response.json())
+            .then(data => {
+                // Debug to see what is being returned
+                console.log('Task data received from FETCH:', data);
+
+                // Create a list item for each task
+                data.forEach(function(task) {
+                    // Get sprinkler name
+                    const sprinklerName = $(`#sprinklerList li[data-id=${task.sprinkler_id}]`).text();
+
+                    // Create elements
+                    const li = document.createElement('li');
+                    const content = document.createElement('div');
+                    const timeInput = document.createElement('input');
+                    const label = document.createElement('span');
+                    const helpText = document.createElement('small');
+                    const timeContainer = document.createElement('div');
+
+                    // Create remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
+
+                    // Add classes  
+                    li.classList.add('sortable-item', 'time-label');
+                    content.classList.add('task-content', 'm-2');
+                    timeInput.classList.add('time-input', 'm-2');
+                    label.classList.add('time-label');
+                    helpText.classList.add('form-text', 'text-muted');
+
+
+                    // Set content
+                    content.textContent = `${sprinklerName}`;
+                    timeInput.type = 'number';
+                    timeInput.min = 1;
+                    timeInput.max = 60;
+                    timeInput.value = task.duration;
+                    label.textContent = 'Runtime: ';
+                    helpText.textContent = 'Enter time in minutes';
+                    removeBtn.textContent = 'Remove';
+
+                    // Append elements  
+                    li.appendChild(content);
+                    timeContainer.appendChild(label);
+                    timeContainer.appendChild(timeInput);
+                    timeContainer.appendChild(helpText);
+                    li.appendChild(timeContainer);
+                    li.appendChild(removeBtn);
+
+                    // Set attributes
+                    li.dataset.id = task.sprinkler_id;
+
+                    // Event listeners
+                    removeBtn.addEventListener('click', () => {
+                        li.remove();
+                    });
+
+                    // Append to list
+                    $('#wateringTasksList').append(li);
+
+                });
+
+                // Create a sortable list
+                var sortable = Sortable.create(wateringTasksList, {
+                    group: {
+                        name: 'wateringTasksList',
+                        pull: 'clone',
+                        put: true
+                    },
+                    sort: false,
+                    animation: 150
+                });
+            })
+            .catch(error => {
+                // Handle error here
+                console.error('Error fetching tasks:', error);
+            });
+        }
+
+    </script>
+</body>
+</html>

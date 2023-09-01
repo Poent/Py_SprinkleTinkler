@@ -13,7 +13,8 @@ class Schedule(db.Model):
     start_time = db.Column(db.Time, nullable=True)
     last_run = db.Column(DateTime, nullable=True)  # New field
     next_run = db.Column(DateTime, nullable=True)  # New field
-    watering_tasks = db.relationship('WateringTask', backref='schedule', lazy=True, cascade='all,delete')
+    custom_days = db.Column(db.String(13), nullable=True) # Example value: 'MTWTFSS', 'M-W-F--'
+    watering_tasks = db.relationship('WateringTask', backref='schedule', lazy=True, cascade='all,delete-orphan')
 
     def to_dict(self):
         return {
@@ -21,9 +22,10 @@ class Schedule(db.Model):
             'name': self.name,
             'frequency': self.frequency,
             'description': self.description,
-            'start_time': str(self.start_time),
+            'start_time': self.start_time.strftime('%H:%M') if self.start_time else None,
             'last_run': self.last_run.isoformat() if self.last_run else None,  # Convert to ISO format
             'next_run': self.next_run.isoformat() if self.next_run else None,  # Convert to ISO format
+            'custom_days': self.custom_days,
             'watering_tasks': [watering_task.to_dict() for watering_task in self.watering_tasks]
         }
 
@@ -43,7 +45,7 @@ class Sprinkler(db.Model):
 class WateringTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     duration = db.Column(db.Integer, nullable=False)
-    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id', ondelete='CASCADE'), nullable=False)
     sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)  # New field
     task_order = db.Column(db.Integer, nullable=False)
 
