@@ -7,7 +7,7 @@ var back = document.getElementById('back');
 
 $(document).ready(function() {
     // Get schedules when document is ready
-    getSchedules();
+    loadSchedulesTable();
 
     // Add Schedule button click event
     $("#add-schedule-btn").click(function() {
@@ -66,7 +66,7 @@ $(document).ready(function() {
 
 });
 
-function getSchedules() {
+function loadSchedulesTable() {
 
     console.log("Getting schedules");
 
@@ -172,7 +172,7 @@ function addSchedule() {
             $("#schedule").val("");
 
             // Refresh the schedules table
-            getSchedules();
+            loadSchedulesTable();
         },
         error: function(error) {
             console.log(error);
@@ -202,7 +202,7 @@ function editSchedule() {
             $("#edit-schedule-name").val("");
 
             // Refresh the schedules table
-            getSchedules();
+            loadSchedulesTable();
         },
         error: function(error) {
             console.log(error);
@@ -217,7 +217,7 @@ function deleteSchedule(scheduleId) {
         type: 'DELETE',
         success: function(schedule) {
             // Refresh the schedules table
-            getSchedules();
+            loadSchedulesTable();
         },
         error: function(error) {
             console.log(error);
