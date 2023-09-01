@@ -4,7 +4,17 @@ from flask_migrate import Migrate
 from datetime import datetime
 from sqlalchemy import DateTime
 
-import relay
+
+#import relay module
+# note that there are two versions of this module
+# one for the actual relay board and one for testing.
+# The testing version does not require the serial port
+# and will not actually turn on the relays.
+
+#import relay
+import relay_dummy as relay
+
+
 from models import db, Schedule, Sprinkler, WateringTask
 
 app = Flask(__name__)
