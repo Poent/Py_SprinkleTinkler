@@ -147,29 +147,6 @@ function getSchedules() {
   
   }
 
-// Function to get schedule details
-function getScheduleDetails(scheduleId) {
-    $.ajax({
-        url: '/schedules/' + scheduleId, // your endpoint to get a single schedule
-        type: 'GET',
-        success: function(schedule) {
-            // Populate the modal with the schedule data
-            $("#scheduleModal .modal-body").html(`
-                <p>Name: ${schedule.name}</p>
-                <p>Watering Task: ${schedule.wateringTask}</p>
-                <p>Schedule: ${schedule.schedule}</p>
-                <p>Next Run Time: ${schedule.nextRunTime}</p>
-            `);
-
-            // Show the modal
-            $("#scheduleModal").modal("show");
-        },
-        error: function(error) {
-            console.log(error);
-        }
-    });
-}
-
 // Function to add a schedule
 function addSchedule() {
     // Get the schedule data from the form
