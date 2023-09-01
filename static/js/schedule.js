@@ -66,13 +66,12 @@ $(document).ready(function() {
 
 });
 
+// Function to load schedules table from API
+// we will call this function whenever we need to refresh the schedules table
 function loadSchedulesTable() {
 
     console.log("Getting schedules");
-
-    //clear the table
-    $("#schedules-table tbody").empty();
-
+    // Get schedules from API
     $.ajax({
       url: '/schedules',
       type: 'GET',
@@ -80,23 +79,27 @@ function loadSchedulesTable() {
   
         // Clear table
         $("#schedules-table tbody").empty(); 
-  
+        
+        // for each schedule
         schedules.forEach(function(schedule) {
-  
-            // Row
-            const row = document.createElement('tr');
-            row.setAttribute('data-id', schedule.id);
 
             console.log("loading schedule id: " + schedule.id);
+  
+            // Create a Row
+            const row = document.createElement('tr');
 
+            // Add data-id attribute
+            row.setAttribute('data-id', schedule.id);
+
+            // Create the id cell
             const idCell = document.createElement('td');
             idCell.textContent = schedule.id;
     
-            // Cells
+            // Create the name cell
             const nameCell = document.createElement('td');
             nameCell.textContent = schedule.name;
     
-            // Create task list button
+            // Create the edit button (with schedule id in data-id attribute)
             const editBtn = document.createElement('button');
             editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
             editBtn.setAttribute('data-id', schedule.id);
@@ -115,6 +118,7 @@ function loadSchedulesTable() {
             const startTimeCell = document.createElement('td');
             startTimeCell.textContent = schedule.start_time;
             
+            // Create the next time cell
             const nextTimeCell = document.createElement('td');
             nextTimeCell.textContent = schedule.next_run;
     
@@ -140,11 +144,8 @@ function loadSchedulesTable() {
             $('#schedules-table tbody').append(row);
   
         });
-  
       }
-  
     });
-  
   }
 
 // Function to add a schedule
