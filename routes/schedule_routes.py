@@ -19,6 +19,7 @@ def schedule():
     watering_tasks = get_all_watering_tasks()
     return render_template('schedule.html', schedules=schedules, watering_tasks=watering_tasks)
 
+# post a new schedule
 @schedule_bp.route('/schedules', methods=['POST'])
 def create_schedule():
     data = request.get_json(force=True)
@@ -37,6 +38,7 @@ def get_schedules():
     schedules = get_all_schedules()
     return jsonify([schedule.to_dict() for schedule in schedules])
 
+# update a schedule by id
 @schedule_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
 def update_schedule(schedule_id):
     #debug to console
@@ -68,7 +70,14 @@ def get_all_watering_tasks():
 
 def create_new_schedule(data):
     print('[POST] Creating new schedule')
-    new_schedule = Schedule(name=data['name'])
+    print('data: ' + str(data))
+    new_schedule  = Schedule(
+        name = data.get('name'),
+        description = data.get('description'),
+        frequency = data.get('frequency'),
+        custom_days = data.get('custom_days'),
+        start_time = datetime.strptime(data.get('start_time'), '%H:%M').time()
+    )
     db.session.add(new_schedule)
     db.session.commit()
     return new_schedule
