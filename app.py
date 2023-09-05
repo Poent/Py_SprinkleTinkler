@@ -68,10 +68,7 @@ def test():
 def test2():
     return render_template('test2.html')
 
-# schedule_reworked.html route
-@app.route('/schedule_reworked')
-def schedule_reworked():
-    return render_template('schedule_reworked.html')
+
 
 if __name__ == '__main__':
 
