@@ -19,6 +19,7 @@ def schedule():
     watering_tasks = get_all_watering_tasks()
     return render_template('schedule.html', schedules=schedules, watering_tasks=watering_tasks)
 
+# post a new schedule
 @schedule_bp.route('/schedules', methods=['POST'])
 def create_schedule():
     data = request.get_json(force=True)
@@ -37,6 +38,7 @@ def get_schedules():
     schedules = get_all_schedules()
     return jsonify([schedule.to_dict() for schedule in schedules])
 
+# update a schedule by id
 @schedule_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
 def update_schedule(schedule_id):
     #debug to console

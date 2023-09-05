@@ -76,6 +76,29 @@
         <h1>Sprinkler Schedule</h1>
         <button onclick="goBack()" class="btn btn-secondary">Back</button>
         <button onclick="editSchedule()" class="btn btn-primary">Edit Schedule</button>
+
+        <div class = "row">
+            <div class = "col">
+                <h1>Schedules</h1>
+                <button id="add-schedule-btn" class="btn btn-success mb-2">Add Schedule</button>
+                <table id="schedules-table" class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Frequency</th>
+                            <th>Start time</th>
+                            <th>Next Run Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <h2>Status</h2>
         <p id="status">Waiting to run...</p>
     </div>
@@ -153,10 +176,100 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
     <script>
+
+        // When the page loads, get the schedules from the database and populate the table
+        $(document).ready(function() {
+            getSchedules();
+        });
+
         function goBack() {
             // back to the previous page
             window.history.back();
+        }
+
+        // function to get the schedules from the database and populate the table
+        function getSchedules() {
+
+        console.log("Getting schedules");
+
+        //clear the table
+        $("#schedules-table tbody").empty();
+
+        $.ajax({
+        url: '/schedules',
+        type: 'GET',
+        success: function(schedules) {
+
+            // Clear table
+            $("#schedules-table tbody").empty(); 
+
+            schedules.forEach(function(schedule) {
+
+                // Row
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', schedule.id);
+
+                console.log("loading schedule id: " + schedule.id);
+
+                const idCell = document.createElement('td');
+                idCell.textContent = schedule.id;
+
+                // Cells
+                const nameCell = document.createElement('td');
+                nameCell.textContent = schedule.name;
+
+                // Create task list button
+                const editBtn = document.createElement('button');
+                editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
+                editBtn.setAttribute('data-id', schedule.id);
+                editBtn.textContent = 'Edit';
+
+
+                //debug button info to console
+                console.log("editBtn: " + editBtn);
+                console.log("editBtn data-id: " + editBtn.getAttribute('data-id'));
+
+                // Create the frequency cell
+                const frequencyCell = document.createElement('td');
+                frequencyCell.textContent = schedule.frequency;
+                
+                // Create the start time cell
+                const startTimeCell = document.createElement('td');
+                startTimeCell.textContent = schedule.start_time;
+                
+                const nextTimeCell = document.createElement('td');
+                nextTimeCell.textContent = schedule.next_run;
+
+                // Create delete schedule button
+                const actionCell = document.createElement('td');
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
+                deleteBtn.setAttribute('data-id', schedule.id);
+                deleteBtn.textContent = 'Delete';
+
+                actionCell.appendChild(editBtn);
+                actionCell.appendChild(deleteBtn);
+
+                // Append cells to row
+                row.appendChild(idCell);
+                row.appendChild(nameCell);
+                row.appendChild(frequencyCell);
+                row.appendChild(startTimeCell);
+                row.appendChild(nextTimeCell);
+                row.appendChild(actionCell);
+
+                // Append row to table
+                $('#schedules-table tbody').append(row);
+
+            });
+
+        }
+
+        });
+
         }
 
         function editSchedule() {
@@ -337,6 +450,7 @@
                 console.log('Task data received from FETCH:', data);
 
                 // Create a list item for each task
+
                 data.forEach(function(task) {
                     // Get sprinkler name
                     const sprinklerName = $(`#sprinklerList li[data-id=${task.sprinkler_id}]`).text();
@@ -408,6 +522,8 @@
                 console.error('Error fetching tasks:', error);
             });
         }
+
+
 
     </script>
 </body>
