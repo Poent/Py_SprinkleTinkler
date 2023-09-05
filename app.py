@@ -4,7 +4,17 @@ from flask_migrate import Migrate
 from datetime import datetime
 from sqlalchemy import DateTime
 
-import relay
+
+#import relay module
+# note that there are two versions of this module
+# one for the actual relay board and one for testing.
+# The testing version does not require the serial port
+# and will not actually turn on the relays.
+
+#import relay
+import relay_dummy as relay
+
+
 from models import db, Schedule, Sprinkler, WateringTask
 
 app = Flask(__name__)
@@ -57,6 +67,11 @@ def test():
 @app.route('/test2')
 def test2():
     return render_template('test2.html')
+
+# schedule_reworked.html route
+@app.route('/schedule_reworked')
+def schedule_reworked():
+    return render_template('schedule_reworked.html')
 
 if __name__ == '__main__':
 
