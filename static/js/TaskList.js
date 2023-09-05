@@ -231,7 +231,7 @@ async function loadTasks(scheduleId) {
     // for each task, create a list item
     tasks.forEach(task => {
 
-        // Get sprinkler name
+        // Get sprinkler name from the sprinkler list
         const sprinklerName = $(`#sprinklerList li[data-id=${task.sprinkler_id}]`).text();
 
         // Create elements
@@ -289,6 +289,11 @@ async function loadTasks(scheduleId) {
 
 // Save watering tasks to the database for the specified scheduleId
 function saveWateringTasks(tasks, scheduleId) {
+
+    // debug
+    console.log("Saving tasks for schedule " + scheduleId);
+    console.log("Tasks: " + JSON.stringify(tasks));
+
     $.ajax({
         url: "/watering_tasks/" + scheduleId,
         method: "POST",
