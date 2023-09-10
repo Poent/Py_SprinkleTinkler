@@ -1,228 +1,220 @@
-
-var sprinklerList = document.getElementById('sprinklerList');
-var wateringTasksList = document.getElementById('wateringTasksList');
-var save = document.getElementById('save');
-var back = document.getElementById('back');
-
-
+// When the page loads, get the schedules from the database and populate the table
 $(document).ready(function() {
-    // Get schedules when document is ready
-    loadSchedulesTable();
-
-    // Add Schedule button click event
-    $("#add-schedule-btn").click(function() {
-        // log to the console
-        console.log("Add Schedule button clicked");
-
-        // Show the modal
-        $("#scheduleModal").modal("show");
-    });
-
-    // add schedule form submit event
-    $("#schedule-form").submit(function(e) {
-        e.preventDefault(); // Prevent form from submitting normally
-        // Call the addSchedule function
-        // log to the console
-        console.log("Add Schedule form submitted");
-        addSchedule();
-    });
-
-
-    // Edit Schedule button click event
-    $("#edit-schedule-form").submit(function(e) {
-        e.preventDefault(); // Prevent form from submitting normally
-        // Get the scheduleId from the hidden input
-        let scheduleId = $("#edit-schedule-id").val();
-        // Call the editSchedule function with scheduleId
-        editSchedule(scheduleId);
-    });
-    
-    // Event handlers for "Edit Schedule" buttons
-    $("#schedules-table").on("click", ".edit-schedule-btn", function(e) {
-        e.stopPropagation();  // Prevent triggering the row click event
-        let scheduleId = $(this).closest("tr").data("id");
-        // Show the modal
-        $("#editScheduleModal").modal("show");
-    });
-
-    // Event handler for "Delete-Schedule" button. 
-    $("#schedules-table").on("click", ".btn-delete-schedule", function(e) {
-        e.stopPropagation();  // Prevent triggering the row click event
-        let scheduleId = $(this).closest("tr").data("id");
-
-        // confirm delete
-        if (confirm("Are you sure you want to delete schedule ID " + scheduleId + "?")) {
-            // Call the deleteSchedule function with scheduleId
-            deleteSchedule(scheduleId);
-        } else {
-            // do nothing
-        }
-    });
-
-    // go back to the index page
-    $("#back").click(function() {
-        window.location.href = "/";
-    });
-
+    loadSchedules();
+    loadSprinklers();
 });
 
-// Function to load schedules table from API
-// we will call this function whenever we need to refresh the schedules table
-function loadSchedulesTable() {
+
+
+// ========================================================
+// Schedules
+// ========================================================
+
+
+// function to get the schedules from the database and populate the table
+function loadSchedules() {
 
     console.log("Getting schedules");
-    // Get schedules from API
-    $.ajax({
-      url: '/schedules',
-      type: 'GET',
-      success: function(schedules) {
-  
-        // Clear table
-        $("#schedules-table tbody").empty(); 
-        
-        // for each schedule
-        schedules.forEach(function(schedule) {
 
-            console.log("loading schedule id: " + schedule.id);
-  
-            // Create a Row
-            const row = document.createElement('tr');
+    // Fetch schedules from the database
+    fetchSchedules()
+    .then(schedules => {
+        // Debug to see what is being returned
+        console.log('Schedule data received from FETCH:', schedules);
 
-            // Add data-id attribute
-            row.setAttribute('data-id', schedule.id);
-
-            // Create the id cell
-            const idCell = document.createElement('td');
-            idCell.textContent = schedule.id;
-    
-            // Create the name cell
-            const nameCell = document.createElement('td');
-            nameCell.textContent = schedule.name;
-    
-            // Create the edit button (with schedule id in data-id attribute)
-            const editBtn = document.createElement('button');
-            editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
-            editBtn.setAttribute('data-id', schedule.id);
-            editBtn.textContent = 'Edit';
-
-
-            //debug button info to console
-            console.log("editBtn: " + editBtn);
-            console.log("editBtn data-id: " + editBtn.getAttribute('data-id'));
-
-            // Create the frequency cell
-            const frequencyCell = document.createElement('td');
-            frequencyCell.textContent = schedule.frequency;
-            
-            // Create the start time cell
-            const startTimeCell = document.createElement('td');
-            startTimeCell.textContent = schedule.start_time;
-            
-            // Create the next time cell
-            const nextTimeCell = document.createElement('td');
-            nextTimeCell.textContent = schedule.next_run;
-    
-            // Create delete schedule button
-            const actionCell = document.createElement('td');
-            const deleteBtn = document.createElement('button');
-            deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
-            deleteBtn.setAttribute('data-id', schedule.id);
-            deleteBtn.textContent = 'Delete';
-
-            actionCell.appendChild(editBtn);
-            actionCell.appendChild(deleteBtn);
-    
-            // Append cells to row
-            row.appendChild(idCell);
-            row.appendChild(nameCell);
-            row.appendChild(frequencyCell);
-            row.appendChild(startTimeCell);
-            row.appendChild(nextTimeCell);
-            row.appendChild(actionCell);
-    
-            // Append row to table
-            $('#schedules-table tbody').append(row);
-  
-        });
-      }
-    });
-  }
-
-// Function to add a schedule
-function addSchedule() {
-    // Get the schedule data from the form
-    let scheduleData = {
-        name: $("#schedule-name").val()
-    };
-
-    // output debug info to the console
-    console.log(scheduleData);
-
-    $.ajax({
-        url: '/schedules', // your endpoint to add a schedule
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(scheduleData),
-        success: function(schedule) {
-            console.log("Schedule added successfully");
-            $("#scheduleModal").modal("hide");
-
-            // Clear the form
-            $("#schedule-name").val("");
-            $("#watering-task").val("");
-            $("#schedule").val("");
-
-            // Refresh the schedules table
-            loadSchedulesTable();
-        },
-        error: function(error) {
-            console.log(error);
-        }
+        populateSchedulesTable(schedules);
     });
 }
 
-// Function to edit a schedule
+
+function populateSchedulesTable(schedules) {
+    // Clear table
+    $("#schedules-table tbody").empty();
+
+    schedules.forEach(schedule => {
+        const row = createScheduleRow(schedule);
+        $('#schedules-table tbody').append(row);
+    });
+}
+
+// function to create a row for the schedules table using DOM manipulation
+// used by the populateSchedulesTable function
+function createScheduleRow(schedule) {
+
+    // Row
+    const row = document.createElement('tr');
+    row.setAttribute('data-id', schedule.id);
+
+    console.log("loading schedule id: " + schedule.id);
+
+    const idCell = document.createElement('td');
+    idCell.textContent = schedule.id;
+
+    // Cells
+    const nameCell = document.createElement('td');
+    nameCell.textContent = schedule.name;
+
+    // Create task list button
+    const editBtn = document.createElement('button');
+    editBtn.classList.add('btn', 'btn-sm', 'btn-info', 'task-list-btn');
+    editBtn.setAttribute('data-id', schedule.id);
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = function() {
+        editSchedule();
+    };
+
+
+    //debug button info to console
+    console.log("editBtn: " + editBtn);
+    console.log("editBtn data-id: " + editBtn.getAttribute('data-id'));
+
+    // Create the frequency cell
+    const frequencyCell = document.createElement('td');
+    frequencyCell.textContent = schedule.frequency;
+    
+    // Create the start time cell
+    const startTimeCell = document.createElement('td');
+    startTimeCell.textContent = schedule.start_time;
+    
+    const nextTimeCell = document.createElement('td');
+    nextTimeCell.textContent = schedule.next_run;
+
+    // Create delete schedule button
+    const actionCell = document.createElement('td');
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'btn-delete-schedule');
+    deleteBtn.setAttribute('data-id', schedule.id);
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = function() {
+        deleteScheduleAjax(schedule.id);
+    };
+
+    actionCell.appendChild(editBtn);
+    actionCell.appendChild(deleteBtn);
+
+    // Append cells to row
+    row.appendChild(idCell);
+    row.appendChild(nameCell);
+    row.appendChild(frequencyCell);
+    row.appendChild(startTimeCell);
+    row.appendChild(nextTimeCell);
+    row.appendChild(actionCell);
+
+    return row;
+
+}
+
+
+// editschedule function to get the schedule from the database and populate the modal form
+// called when the edit button is clicked on the schedules table
+// load the tasks for the schedule and then shows the modal
 function editSchedule() {
-    // Get the schedule data from the form
-    let scheduleData = {
-        name: $("#edit-schedule-name").val()
-    };
+    // Get the schedule-id from event.target
+    let scheduleId = event.target.getAttribute("data-id");
 
-    // output debug info to the console
-    console.log(scheduleData);
+    console.log("Editing scheduleId: " + scheduleId);
 
-    $.ajax({
-        url: '/schedules/' + scheduleId, // your endpoint to edit a schedule
-        type: 'PUT',
-        data: scheduleData,
-        success: function(schedule) {
-            // Hide the modal
-            $("#editScheduleModal").modal("hide");
+    // Update the header of the modal with the scheduleId
+    document.querySelector('.schedule-modal-header').innerText = "Edit Schedule " + scheduleId;
 
-            // Clear the form
-            $("#edit-schedule-name").val("");
+    // if scheduleId is 0, then this is a new schedule and we need to clear the form
+    if (scheduleId == 0) {
+        // Clear the form
+        document.getElementById("name").value = "";
+        document.getElementById("frequency").value = "daily";
+        document.getElementById("startTime").value = "00:00";
+        document.getElementById("customDays").style.display = 'none';
+        document.getElementById("wateringTasksList").innerHTML = '';
+        document.getElementById("edit-schedule-btn").setAttribute("data-schedule-id", 0);
+        
+    } 
+    else {
+        
+        // if the scheduleId is not 0, then we need to get the schedule from the database and populate the form
+        fetchScheduleById(scheduleId)
+        .then(schedule => {
+            populateModalForm(schedule);
+        });
+    }
+    
+    // Set the schedule-id on the save button
+    document.getElementById("save-schedule-button").setAttribute("data-id", scheduleId);
+    loadTasks(scheduleId);
 
-            // Refresh the schedules table
-            loadSchedulesTable();
-        },
-        error: function(error) {
-            console.log(error);
-        }
-    });
+    // Display the modal
+    $('#editScheduleModal').modal('show');
 }
 
-// Function to delete a schedule
-function deleteSchedule(scheduleId) {
-    $.ajax({
-        url: '/schedules/' + scheduleId, // your endpoint to delete a schedule
-        type: 'DELETE',
-        success: function(schedule) {
-            // Refresh the schedules table
-            loadSchedulesTable();
-        },
-        error: function(error) {
-            console.log(error);
-        }
+
+
+
+// function to populate the modal form with the schedule data
+// uses DOM manipulation to set the values of the input fields
+function populateModalForm(data) {
+
+    // Debug to see what is being returned
+    console.log('Schedule data received from FETCH:', data);
+
+    // Update the input fields with existing data
+    document.getElementById("name").value = data.name || '';
+    document.getElementById("frequency").value = data.frequency || 'daily';
+    document.getElementById("startTime").value = data.start_time || '00:00';
+
+    // Show or hide the customDays section based on the frequency
+    if (data.frequency === 'custom') {
+        document.getElementById("customDays").style.display = 'block';
+    } else {
+        document.getElementById("customDays").style.display = 'none';
+    }
+
+    // Reset all checkboxes to unchecked before setting them based on the database values
+    let days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    days.forEach(day => {
+        document.getElementById(day).checked = false;
     });
+
+    // Check the appropriate checkboxes for customDays based on the database
+    if (data.custom_days) {
+        let customDaysArray = data.custom_days.split(",");
+        customDaysArray.forEach(day => {
+            document.getElementById(day).checked = true;
+        });
+    }
 }
 
+
+// function to save the schedule to the database
+// called when the save button is clicked on the modal
+async function saveSchedule() {
+    let scheduleId = event.target.getAttribute("data-id");
+
+    // Get form data and tasks
+    let requestData = getScheduleFormData();
+    let tasks = getWateringTasks(scheduleId);
+
+    try {
+        if (scheduleId == 0) {
+            let data = await createSchedule(requestData);
+            console.log('Created schedule:', data);
+            await saveWateringTasks(tasks, data.id);
+        } else {
+            let data = await updateSchedule(scheduleId, requestData);
+            console.log('Updated schedule:', data);
+            await deleteWateringTasks(scheduleId);
+            await saveWateringTasks(tasks, scheduleId);
+        }
+        loadSchedules();
+        $('#editScheduleModal').modal('hide');
+    } catch (error) {
+        console.error('Error saving schedule:', error);
+    }
+}
+
+// function to monitor the frequency dropdown and show or hide the customDays section
+document.getElementById("frequency").addEventListener('change', function () {
+    if (this.value === 'custom') {
+        document.getElementById("customDays").style.display = 'block';
+    } else {
+        document.getElementById("customDays").style.display = 'none';
+    }
+});

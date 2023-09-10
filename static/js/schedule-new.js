@@ -1,6 +1,6 @@
 // When the page loads, get the schedules from the database and populate the table
 $(document).ready(function() {
-    getSchedules();
+    loadSchedules();
     loadSprinklers();
 });
 
@@ -17,6 +17,17 @@ function fetchSchedules() {
     });
 }
 
+// function to fetch the schedule by id
+function fetchScheduleById(scheduleId) {
+    // Fetch schedule from the database
+    return $.ajax({
+        url: '/schedules/' + scheduleId,
+        type: 'GET'
+    });
+}
+
+// function to create a row for the schedules table using DOM manipulation
+// used by the populateSchedulesTable function
 function createScheduleRow(schedule) {
 
     // Row
@@ -64,7 +75,7 @@ function createScheduleRow(schedule) {
     deleteBtn.setAttribute('data-id', schedule.id);
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = function() {
-        deleteSchedule(schedule.id);
+        deleteScheduleAjax(schedule.id);
     };
 
     actionCell.appendChild(editBtn);
@@ -93,7 +104,7 @@ function populateSchedulesTable(schedules) {
 }
 
 // function to get the schedules from the database and populate the table
-function getSchedules() {
+function loadSchedules() {
 
     console.log("Getting schedules");
 
@@ -128,44 +139,12 @@ function editSchedule() {
         
     } 
     else {
-        // Fetch existing data for the schedule by ID (assuming your API endpoint follows this format)
-        fetch('/schedules/' + scheduleId)
-            .then(response => response.json())
-            .then(data => {
-
-                // Debug to see what is being returned
-                console.log('Schedule data received from FETCH:', data);
-
-                // Update the input fields with existing data
-                document.getElementById("name").value = data.name || '';
-                document.getElementById("frequency").value = data.frequency || 'daily';
-                document.getElementById("startTime").value = data.start_time || '00:00';
-
-                // Show or hide the customDays section based on the frequency
-                if (data.frequency === 'custom') {
-                    document.getElementById("customDays").style.display = 'block';
-                } else {
-                    document.getElementById("customDays").style.display = 'none';
-                }
-
-                // Reset all checkboxes to unchecked before setting them based on the database values
-                let days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                days.forEach(day => {
-                    document.getElementById(day).checked = false;
-                });
-
-                // Check the appropriate checkboxes for customDays based on the database
-                if (data.custom_days) {
-                    let customDaysArray = data.custom_days.split(",");
-                    customDaysArray.forEach(day => {
-                        document.getElementById(day).checked = true;
-                    });
-                }
-            })
-            .catch(error => {
-                // Handle error here
-                console.error('Error fetching schedule:', error);
-            });
+        
+        // if the scheduleId is not 0, then we need to get the schedule from the database and populate the form
+        fetchScheduleById(scheduleId)
+        .then(schedule => {
+            populateModalForm(schedule);
+        });
     }
     
     // Set the schedule-id on the save button
@@ -174,6 +153,39 @@ function editSchedule() {
 
     // Display the modal
     $('#editScheduleModal').modal('show');
+}
+
+// function to populate the modal form with the schedule data
+function populateModalForm(data) {
+
+    // Debug to see what is being returned
+    console.log('Schedule data received from FETCH:', data);
+
+    // Update the input fields with existing data
+    document.getElementById("name").value = data.name || '';
+    document.getElementById("frequency").value = data.frequency || 'daily';
+    document.getElementById("startTime").value = data.start_time || '00:00';
+
+    // Show or hide the customDays section based on the frequency
+    if (data.frequency === 'custom') {
+        document.getElementById("customDays").style.display = 'block';
+    } else {
+        document.getElementById("customDays").style.display = 'none';
+    }
+
+    // Reset all checkboxes to unchecked before setting them based on the database values
+    let days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    days.forEach(day => {
+        document.getElementById(day).checked = false;
+    });
+
+    // Check the appropriate checkboxes for customDays based on the database
+    if (data.custom_days) {
+        let customDaysArray = data.custom_days.split(",");
+        customDaysArray.forEach(day => {
+            document.getElementById(day).checked = true;
+        });
+    }
 }
 
 function saveSchedule() {
@@ -251,7 +263,7 @@ function saveSchedule() {
             // Save the watering tasks
             saveWateringTasks(tasks, data.id);
 
-            getSchedules();
+            loadSchedules();
         })
         .catch(error => {
             // Handle error here
@@ -271,7 +283,7 @@ function saveSchedule() {
         .then(data => {
             // Handle successful response here
             console.log('Updated schedule:', data);
-            getSchedules();
+            loadSchedules();
         })
         .catch(error => {
             // Handle error here
@@ -347,167 +359,155 @@ function loadSprinklers() {
 }
 
 
+// Function to fetch task data from the server
+async function fetchTaskData(scheduleId) {
+    try {
+        const response = await fetch('/watering_tasks/' + scheduleId);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+    }
+}
 
-
-
-// function to load the tasks from the database and create a sortable.js list
-function loadTasks(scheduleId) {
-
-    // clear the list
+// Function to clear the existing list of tasks in the DOM
+function clearTaskList() {
     document.getElementById('wateringTasksList').innerHTML = '';
+}
 
-    // Fetch tasks from the database
-    fetch('/watering_tasks/' + scheduleId )
-    .then(response => response.json())
-    .then(data => {
-        // Debug to see what is being returned
-        console.log('Task data received from FETCH:', data);
+// Function to create a list item for a task
+function createTaskListItem(task, sprinklerName) {
+    const li = document.createElement('li');
+    const content = document.createElement('div');
+    const timeInput = document.createElement('input');
+    const label = document.createElement('span');
+    const helpText = document.createElement('small');
+    const timeContainer = document.createElement('div');
+    const removeBtn = document.createElement('button');
+    
+    li.classList.add('sortable-item', 'time-label');
+    content.classList.add('task-content', 'm-2');
+    timeInput.classList.add('time-input', 'm-2');
+    label.classList.add('time-label');
+    helpText.classList.add('form-text', 'text-muted');
 
-        // Create a list item for each task
+    content.textContent = `${sprinklerName}`;
+    timeInput.type = 'number';
+    timeInput.min = 1;
+    timeInput.max = 60;
+    timeInput.value = task.duration;
+    label.textContent = 'Runtime: ';
+    helpText.textContent = 'Enter time in minutes';
+    removeBtn.textContent = 'Remove';
+    removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
 
-        data.forEach(task => {
-            // sprinkler name is derived from the sprinkler id. Get the sprinkler name from the sprinkler list
-            const sprinklerName = document.querySelector(`#sprinklerList li[data-id="${task.sprinkler_id}"]`).textContent;
+    removeBtn.addEventListener('click', () => {
+        li.remove();
+    });
 
-            // Create elements
-            const li = document.createElement('li');
-            const content = document.createElement('div');
-            const timeInput = document.createElement('input');
-            const label = document.createElement('span');
-            const helpText = document.createElement('small');
-            const timeContainer = document.createElement('div');
+    li.appendChild(content);
+    timeContainer.appendChild(label);
+    timeContainer.appendChild(timeInput);
+    timeContainer.appendChild(helpText);
+    li.appendChild(timeContainer);
+    li.appendChild(removeBtn);
+    li.dataset.id = task.sprinkler_id;
 
-            // Create remove button
-            const removeBtn = document.createElement('button');
-            removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
+    return li;
+}
 
-            // Add classes  
-            li.classList.add('sortable-item', 'time-label');
-            content.classList.add('task-content', 'm-2');
-            timeInput.classList.add('time-input', 'm-2');
-            label.classList.add('time-label');
-            helpText.classList.add('form-text', 'text-muted');
+function getSprinklerName(sprinklerId) {
+    return document.querySelector(`#sprinklerList li[data-id="${sprinklerId}"]`).textContent;
+}
 
+function initializeSortableList() {
+    Sortable.create(wateringTasksList, {
+        group: {
+            name: 'wateringTasksList',
+            pull: 'clone',
+            put: true
+        },
+        sort: false,
+        animation: 150,
+        onAdd: function (evt) {
+            let itemEl = evt.item;
 
-            // Set content
-            content.textContent = `${sprinklerName}`;
-            timeInput.type = 'number';
-            timeInput.min = 1;
-            timeInput.max = 60;
-            timeInput.value = task.duration;
-            label.textContent = 'Runtime: ';
-            helpText.textContent = 'Enter time in minutes';
-            removeBtn.textContent = 'Remove';
+            let itemContent = document.createElement('div');
+            itemContent.innerHTML = itemEl.innerHTML;
+            itemEl.innerHTML = '';
+            itemEl.appendChild(itemContent);
 
-            // Append elements  
-            li.appendChild(content);
-            timeContainer.appendChild(label);
+            let timeContainer = document.createElement('div');
+            timeContainer.classList.add('m-2');
+
+            let timeLabel = document.createElement('span');
+            timeLabel.innerHTML = 'Runtime: ';
+            timeLabel.classList.add('time-label');
+            timeContainer.appendChild(timeLabel);
+
+            let timeInput = document.createElement('input');
+            timeInput.type = "number";
+            timeInput.min = "1";
+            timeInput.value = "5";
+            timeInput.max = "60";
+            timeInput.placeholder = "Enter time in mins";
+            timeInput.classList.add('time-input');
             timeContainer.appendChild(timeInput);
+
+            let helpText = document.createElement('small');
+            helpText.innerHTML = "Enter time in minutes";
+            helpText.classList.add('form-text', 'text-muted');
             timeContainer.appendChild(helpText);
-            li.appendChild(timeContainer);
-            li.appendChild(removeBtn);
 
-            // Set attributes
-            li.dataset.id = task.sprinkler_id;
-
-            // Event listeners
-            removeBtn.addEventListener('click', () => {
-                li.remove();
+            let removeBtn = document.createElement('button');
+            removeBtn.innerHTML = 'X';
+            removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
+            removeBtn.addEventListener('click', function(e) {
+                itemEl.remove();
             });
 
-            // Append to list
-            $('#wateringTasksList').append(li);
-
-        });
-
-        // Create a sortable list
-        Sortable.create(wateringTasksList, {
-            group: {
-                name: 'wateringTasksList',
-                pull: 'clone',
-                put: true
-            },
-            sort: false,
-            animation: 150,
-            onAdd: function (evt) {
-                let itemEl = evt.item;  // dragged HTMLElement
-
-                // create a div to hold item's content
-                let itemContent = document.createElement('div');
-                itemContent.innerHTML = itemEl.innerHTML;
-                itemEl.innerHTML = '';
-                itemEl.appendChild(itemContent);
-
-                // time input container
-                let timeContainer = document.createElement('div');
-                timeContainer.classList.add('m-2');
-
-                // time label
-                let timeLabel = document.createElement('span');
-                timeLabel.innerHTML = 'Runtime: ';
-                timeLabel.classList.add('time-label');
-                timeContainer.appendChild(timeLabel);
-
-                // time input field
-                let timeInput = document.createElement('input');
-                timeInput.type = "number";
-                timeInput.min = "1";
-                timeInput.value = "5";
-                timeInput.max = "60";
-                timeInput.placeholder = "Enter time in mins";
-                timeInput.classList.add('time-input');
-                timeContainer.appendChild(timeInput);
-
-                // help text
-                let helpText = document.createElement('small');
-                helpText.innerHTML = "Enter time in minutes";
-                helpText.classList.add('form-text', 'text-muted');
-                timeContainer.appendChild(helpText);
-
-
-                // add time container to item
-                itemEl.appendChild(timeContainer);
-
-                // remove button
-                let removeBtn = document.createElement('button');
-                removeBtn.innerHTML = 'X';
-                removeBtn.classList.add('btn', 'btn-danger', 'btn-sm', 'remove-btn', 'm-2', 'p-1');
-                removeBtn.addEventListener('click', function(e) {
-                    itemEl.remove();
-                });
-
-                // add remove button to item
-                itemEl.appendChild(removeBtn);
-            }
-        });
-    })
-    .catch(error => {
-        // Handle error here
-        console.error('Error fetching tasks:', error);
+            itemEl.appendChild(timeContainer);
+            itemEl.appendChild(removeBtn);
+        }
     });
 }
 
+async function loadTasks(scheduleId) {
+    clearTaskList();
+
+    try {
+        const taskData = await fetchTaskData(scheduleId);
+
+        taskData.forEach(task => {
+            const sprinklerName = getSprinklerName(task.sprinkler_id);
+            const taskListItem = createTaskListItem(task, sprinklerName);
+            document.getElementById('wateringTasksList').appendChild(taskListItem);
+        });
+
+        initializeSortableList();
+    } catch (error) {
+        console.error('Error in loadTasks:', error);
+    }
+}
 
 
-
-// function to delete a schedule
-function deleteSchedule(scheduleId) {
+// function to delete the schedule by id using ajax and reload the schedules table
+function deleteScheduleAjax(scheduleId) {
 
     // Make DELETE request
-    fetch('/schedules/' + scheduleId, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Handle successful response here
-        console.log('Deleted schedule:', data);
-        getSchedules();
-    })
-    .catch(error => {
-        // Handle error here
-        console.error('Error deleting schedule:', error);
+    $.ajax({
+        url: "/schedules/" + scheduleId,
+        method: "DELETE",
+        success: function(response) {
+            console.log(response);
+            loadSchedules();
+        },
+        error: function(xhr, status, error) {
+            console.error(error);
+            alert('Failed to delete schedule. Please try again.');
+        }
     });
 }
+
 
 
 

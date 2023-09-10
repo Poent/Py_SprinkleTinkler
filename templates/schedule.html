@@ -3,18 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule</title>
-
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- Load full version of jQuery first -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-    <!-- Then load Bootstrap JS -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.10.2/Sortable.min.js"></script>
-
 
     <style>
         .highlight {
@@ -77,13 +68,16 @@
 
 
     </style>
+
+    <title>Sprinkler Controller</title>
 </head>
 <body>
     <div class="container">
+        <h1>Sprinkler Schedules</h1>
+
         <div class = "row">
             <div class = "col">
-                <h1>Schedules</h1>
-                <button id="add-schedule-btn" class="btn btn-success mb-2">Add Schedule</button>
+                <button id="add-schedule-btn" class="btn btn-success mb-2" data-id="0" onclick="editSchedule()">Add Schedule</button>
                 <table id="schedules-table" class="table">
                     <thead>
                         <tr>
@@ -101,64 +95,91 @@
                 </table>
             </div>
         </div>
-
-        <button id="back" class="btn btn-primary mt-4">Back</button>
+        <button onclick="goBack()" class="btn btn-primary">Back</button>
     </div>
 
-    <!-- Schedule Modal -->
-    <div id="scheduleModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal" tabindex="-1" role="dialog" id="editScheduleModal">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Manage Schedule</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="schedule-modal-header">Edit Schedule</h5>
+                    <button type="button" id="edit-schedule-btn" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="schedule-form">
-                        <input type="hidden" id="schedule-id">
-                        <div class="form-group">
-                            <label for="schedule-name">Schedule Name</label>
-                            <input type="text" class="form-control" id="schedule-name" placeholder="Enter schedule name">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" class="form-control">
+                    <label for="frequency">Frequency:</label>
+                    <select class="form-control" id="frequency">
+                        <option value="daily">Daily</option>
+                        <option value="alternate">Every Other Day</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                    <div id="customDays" class="mt-3" style="display: none;">
+                        <!-- Switches for all days -->
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="sunday">
+                            <label class="custom-control-label" for="sunday">Sunday</label>
                         </div>
-                        <button type="submit" class="btn btn-primary add-schedule-btn">Submit</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Task List Modal -->
-    <div id="taskListModal" class="modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div id="task-modal-header" class="modal-header h2">Task List Editor</div>
-                <div id="task-modal-body" class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h3>Sprinkler List</h3>
-                            <ul id="sprinklerList" class="list-group"></ul>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="monday">
+                            <label class="custom-control-label" for="monday">Monday</label>
                         </div>
-            
-                        <div class="col-md-6">
-                            <h3>Watering Tasks</h3>
-                            <ul id="wateringTasksList" class="list-group">
-                            </ul>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="tuesday">
+                            <label class="custom-control-label" for="tuesday">Tuesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="wednesday">
+                            <label class="custom-control-label" for="wednesday">Wednesday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="thursday">
+                            <label class="custom-control-label" for="thursday">Thursday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="friday">
+                            <label class="custom-control-label" for="friday">Friday</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="saturday">
+                            <label class="custom-control-label" for="saturday">Saturday</label>
                         </div>
                     </div>
+                    
+                    <label for="startTime" class="mt-3">Start Time:</label>
+                    <input type="time" id="startTime" class="form-control">
+                </div>
+                <!-- Sprinkler List -->
+                <div class="row m-2">
+                    <div class="col-md-6">
+                        <h3>Sprinkler List</h3>
+                        <ul id="sprinklerList" class="list-group"></ul>
+                    </div>
+        
+                    <div class="col-md-6">
+                        <h3>Watering Tasks</h3>
+                        <ul id="wateringTasksList" class="list-group">
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="save-schedule-button" onclick="saveSchedule()">Save Schedule</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
+    <script srd="static/js/utilities.js"></script>
+    <script src="static/js/api.js "></script>
+    <script src="static/js/schedule-new.js"></script>
     
-    <script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
-       
-    <script src="/static/js/schedule.js"></script>
-    <script src="/static/js/TaskList.js"></script>
-    
-
 </body>
 </html>
