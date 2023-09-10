@@ -5,12 +5,6 @@ $(document).ready(function() {
 });
 
 
-
-// ========================================================
-// Schedules
-// ========================================================
-
-
 // function to get the schedules from the database and populate the table
 function loadSchedules() {
 
@@ -60,7 +54,7 @@ function createScheduleRow(schedule) {
     editBtn.setAttribute('data-id', schedule.id);
     editBtn.textContent = 'Edit';
     editBtn.onclick = function() {
-        editSchedule();
+        editSchedule(schedule.id);
     };
 
 
@@ -108,9 +102,8 @@ function createScheduleRow(schedule) {
 // editschedule function to get the schedule from the database and populate the modal form
 // called when the edit button is clicked on the schedules table
 // load the tasks for the schedule and then shows the modal
-function editSchedule() {
-    // Get the schedule-id from event.target
-    let scheduleId = event.target.getAttribute("data-id");
+function editSchedule(scheduleId) {
+    
 
     console.log("Editing scheduleId: " + scheduleId);
 

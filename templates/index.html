@@ -18,28 +18,27 @@
 
     <style>
 
-        .btn:not(.btn-group .btn) {
-            margin: 5px;
-        }
-
-        #calendar {
-            max-width: 1100px;
-            max-height: 500px;
-            margin: 25px auto;
+        #sprinkler-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 2fr)); /* Creates a grid with columns of minimum 150px and maximum 1fr width */
+            gap: 2px; /* Defines the gap between the grid items */
         }
 
         .btn-group {
-            margin: 0 5px; /* Adding space between the button groups */
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc; /* Optional: Adds a border around the button groups for better visibility */
+            padding: 5px; /* Optional: Adds some padding inside the button groups */
         }
 
         .btn-group .btn {
-            margin: 0 !important; /* Remove margin between buttons in a group */
-        }
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
 
-        .d-flex.align-items-center.justify-content-center {
-            flex-wrap: wrap;
         }
-
 
 
     </style>
@@ -59,180 +58,20 @@
                 </div>
             </div>
             
-        <div class="d-flex align-items-center justify-content-center" style="gap: 1rem; flex-wrap: wrap;">
+
             <button id="add-sprinkler" class="btn btn-success mr-3" style="min-width: 120px;">Add Sprinkler</button>
-            <div id="sprinkler-buttons" class="d-flex justify-content-center flex-wrap">
+            <div id="sprinkler-buttons">
                 <!-- Sprinkler buttons in a row here -->
             </div>
-        </div>
 
-        </div>
 
-        <div class="d-flex justify-content-left mb-3">
-            <button id="test-button" class="btn btn-primary">Test</button>
-            <button id="test-button-2" class="btn btn-primary">Reworked Schedule</button>
         </div>
     </div>
 
 
+    <script src="static/js/api.js"></script>
+    <script src="static/js/utilities.js"></script>
+    <script src="static/js/index.js"></script>
 
-
-    <script>
-        // Load sprinklers from the database
-        $.getJSON('/sprinklers', function(data) {
-            $.each(data, function(key, val) {
-                // load the sprinkler id and name into the button group
-                addSprinklerButton(val.id, val.name);
-            });
-        });
-
-        // Add and remove sprinkler button functionality
-        $('#add-sprinkler').click(function() {
-            $.post('/sprinklers', function(data) {
-                addSprinklerButton(data.id, "Sprinkler");
-            });
-        });
-
-        function addSprinklerButton(id, name) {
-            
-            var idButton = $('<button class="btn btn-secondary" disabled data-id="' + id + '">' + id + '</button>');
-            var sprinklerButton = $('<button class="btn btn-secondary" data-id="' + id + '">' + name + '</button>');
-            var editButton = $('<button class="btn btn-warning"><i class="bi-pencil-square"></i></button>');
-            var deleteButton = $('<button class="btn btn-danger">x</button>');
-            var buttonGroup = $('<div class="btn-group m-1" role="group"></div>');
-
-
-            deleteButton.click(function(event) {
-                event.stopPropagation();  // prevent the click event from triggering the sprinkler button's click event
-                if (confirm('Are you sure you want to delete this sprinkler?')) {
-                    $.ajax({
-                        url: '/sprinklers/' + id,
-                        type: 'DELETE',
-                        success: function() {
-                            buttonGroup.remove();
-                        }
-                    });
-                }
-            });
-
-            sprinklerButton.click(function() {
-                $.ajax({
-                    url: '/toggle',
-                    type: 'POST',
-                    contentType: 'application/json;charset=UTF-8',
-                    data: JSON.stringify({
-                        id: id,
-                        state: $(this).hasClass('btn-primary') ? 'off' : 'on'  // change 'on' to 'btn-primary'
-                    }),
-                    dataType: "json",
-                    success: () => {
-                        $(this).toggleClass('btn-secondary btn-primary');  // change 'on' to 'btn-secondary btn-primary'
-                    }
-                });
-            });
-
-            // On edit button click
-            editButton.click(function() {
-                // If editButton is a checkbox, i.e., we're in edit mode
-                if (editButton.hasClass('btn-success')) {
-                    var newId = idInput.val();
-                    var newName = nameInput.val();
-
-                    // Send an AJAX request to update the sprinkler
-                    $.ajax({
-                        url: '/sprinklers/' + id,
-                        type: 'PUT',
-                        contentType: 'application/json;charset=UTF-8',
-                        data: JSON.stringify({
-                            id: newId,
-                            name: newName
-                        }),
-                        dataType: "json",
-                        success: () => {
-                            // Remove the current button group
-                            buttonGroup.remove();
-
-                            // Re-add the button group, which will pull the updated data from the database
-                            addSprinklerButton(newId, newName);
-                        },
-                        error: (jqXHR) => {
-                            // If an error occurs, revert the changes and show an alert
-                            alert(jqXHR.responseJSON.error);
-                            idButton.text(id);
-                            sprinklerButton.text('Sprinkler');
-                        }
-                    });
-                    editButton.html('<i class="bi bi-pencil-square"></i>'); // Changed to 'pencil' symbol
-                    editButton.removeClass('btn-success').addClass('btn-warning');
-                } else {
-                    // If editButton is a pencil, i.e., we're in view mode
-                    idButton.replaceWith(idInput = $('<input type="number" value="' + idButton.text() + '">'));
-                    sprinklerButton.replaceWith(nameInput = $('<input type="text" value="' + sprinklerButton.text() + '">'));
-                    editButton.html('<i class="bi bi-check"></i>'); // Changed to 'check' symbol
-                    editButton.removeClass('btn-warning').addClass('btn-success');
-                }
-            });
-
-
-
-            buttonGroup.append(idButton, sprinklerButton, editButton, deleteButton);
-
-
-
-            // Find the right place to insert the new button group
-            var existingButtons = $('#sprinkler-buttons .btn-group');
-            var inserted = false;
-            for (var i = 0; i < existingButtons.length; i++) {
-                var existingId = parseInt($(existingButtons[i]).find('button').data('id'));
-                if (id < existingId) {
-                    $(existingButtons[i]).before(buttonGroup);
-                    inserted = true;
-                    break;
-                }
-            }
-            if (!inserted) {
-                // If the button was not inserted (because the id is greater than all existing ids), append it at the end.
-                $('#sprinkler-buttons').append(buttonGroup);
-            }
-        }
-
-
-        // Calendar initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    $.ajax({
-                        url: '/get-events',
-                        type: 'GET',
-                        success: function(data) {
-                            successCallback(data.events);
-                        },
-                        error: function() {
-                            failureCallback('There was an error while fetching events.');
-                        }
-                    });
-                }
-            });
-            calendar.render();
-        });
-
-        // navigate to test page
-        $('#test-button').click(function() {
-            window.location.href = '/test';
-        });
-
-        // navigate to test page 2
-        $('#test-button-2').click(function() {
-            window.location.href = '/test2';
-        });
-
-    </script>
 </body>
 </html>

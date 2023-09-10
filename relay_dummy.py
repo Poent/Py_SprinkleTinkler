@@ -25,6 +25,13 @@ def print_and_write(command):
 def get_status():
     return relay_states
 
+# get the relay_states
+def get_status():
+    return relay_states
+
+def get_channel_status(channel):
+    return relay_states[channel - 1]
+
 def turn_on_all_relays():
     print_and_write("[DUMMY] Turning ON all relays")
 

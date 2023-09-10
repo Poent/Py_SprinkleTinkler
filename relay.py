@@ -58,6 +58,9 @@ def print_and_write(command):
 def get_status():
     return relay_states
 
+def get_channel_status(channel):
+    return relay_states[channel - 1]
+
 def turn_on_all_relays():
     print_and_write(commandTable[17][1])
 

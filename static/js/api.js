@@ -116,19 +116,121 @@ async function deleteWateringTasks(scheduleId) {
 }
 
 
-// function to fetch the sprinklers from the database
-async function fetchSprinklers() {
+
+
+
+// function to toggle the state of a sprinkler. Called when a sprinkler button is clicked
+async function toggleSprinklerState(sprinklerId, newState) {
     try {
-        const response = await fetch('/sprinklers');
-        return await response.json();
+        const response = await fetch('/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: sprinklerId, state: newState ? 'on' : 'off' }),
+        });
+        
+        const data = await response.json();
+        if (data.status !== 'success') {
+            throw new Error('Failed to toggle sprinkler state');
+        }
     } catch (error) {
-        console.error('Error fetching sprinklers:', error);
+        console.error('Error toggling sprinkler state:', error);
     }
 }
 
 
 
+// Function to load all sprinklers from the database
+async function fetchSprinklers() {
+    try {
+        const response = await fetch('/sprinklers', { method: 'GET' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error loading sprinklers:', error);
+    }
+}
+
+// function to fetch the state of all sprinklers
+async function fetchSprinklerStates() {
+    try {
+        const response = await fetch('/get-relay-states');
+        const data = await response.json();
+        return data.states;
+    } catch (error) {
+        console.error('Error getting relay states:', error);
+        return null;
+    }
+}
+
+// function to fetch the state of a sprinkler by id
+async function fetchSprinklerState(id) {
+    try {
+        const response = await fetch(`/get-relay-state/${id}`);
+        const data = await response.json();
+        return data.state;
+    } catch (error) {
+        console.error(`Error getting relay state for ID ${id}:`, error);
+        return null;
+    }
+}
 
 
 
+// Function to add a new sprinkler
+async function addSprinkler() {
+    try {
+        const response = await fetch('/sprinklers', { method: 'POST' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error adding sprinkler:', error);
+    }
+}
 
+// Function to delete a sprinkler by ID
+async function deleteSprinkler(sprinklerId) {
+    try {
+        const response = await fetch('/sprinklers/' + sprinklerId, { method: 'DELETE' });
+        return await response.ok;
+    } catch (error) {
+        console.error('Error deleting sprinkler:', error);
+    }
+}
+
+// Function to toggle the state of a sprinkler
+async function toggleSprinklerStateApi(sprinklerId, newState) {
+    try {
+        const response = await fetch('/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: sprinklerId, state: newState })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error toggling sprinkler state:', error);
+    }
+}
+
+// Function to edit a sprinkler's details
+async function editSprinkler(sprinklerId, newDetails) {
+    try {
+        const response = await fetch('/sprinklers/' + sprinklerId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newDetails)
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error editing sprinkler:', error);
+    }
+}
+
+// Function to fetch calendar events
+async function fetchCalendarEvents() {
+    try {
+        const response = await fetch('/get-events', { method: 'GET' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching calendar events:', error);
+    }
+}

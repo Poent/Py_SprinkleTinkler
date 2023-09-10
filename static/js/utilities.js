@@ -219,3 +219,74 @@ function getScheduleFormData() {
         custom_days: customDays,
     };
 }
+
+// Function to create a sprinkler button group with various buttons and event handlers
+async function createSprinklerButtonGroup(sprinkler) {
+    // The sprinkler parameter is an object with properties: id and name
+
+    // Create DOM elements for the button group and individual buttons
+    const buttonGroup = document.createElement('div');
+    buttonGroup.classList.add('btn-group', 'm-1');
+    buttonGroup.setAttribute('role', 'group');
+
+    const idButton = document.createElement('button');
+    idButton.classList.add('btn', 'btn-secondary');
+    idButton.setAttribute('disabled', 'true');
+    idButton.setAttribute('data-id', sprinkler.id);
+    idButton.textContent = sprinkler.id;
+
+    const nameButton = document.createElement('button');
+    nameButton.classList.add('btn', 'btn-secondary');
+    nameButton.setAttribute('data-id', sprinkler.id);
+    nameButton.textContent = sprinkler.name;
+
+    const editButton = document.createElement('button');
+    editButton.classList.add('btn', 'btn-warning');
+    editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+    editButton.addEventListener('click', () => editSprinklerDetails(sprinkler.id));
+
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('btn', 'btn-danger');
+    deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+    deleteButton.addEventListener('click', () => deleteSprinklerById(sprinkler.id));
+
+    // Create a button to represent and toggle the sprinkler state
+    const currentState = await fetchSprinklerState(sprinkler.id);
+    const stateButton = document.createElement('button');
+    stateButton.classList.add('btn', currentState ? 'btn-success' : 'btn-danger', 'state-button');
+    stateButton.setAttribute('data-id', sprinkler.id);
+    stateButton.innerHTML = '<i class="bi bi-power"></i>'
+
+    // Add event listener to toggle the state when the button is clicked
+    stateButton.addEventListener('click', () => toggleSprinklerState(sprinkler.id));
+
+    // Append buttons to the button group
+    buttonGroup.append(idButton, nameButton, stateButton, editButton, deleteButton);
+
+    return buttonGroup;
+}
+
+// Function to find the correct position to insert a sprinkler button group based on the sprinkler ID
+function insertSprinklerButtonGroup(buttonGroup, sprinklerId) {
+    // The buttonGroup parameter is a DOM element representing the button group to insert
+    // The sprinklerId parameter is the ID of the sprinkler
+
+    // Find the existing button groups in the DOM
+    let existingButtons = document.querySelectorAll('#sprinkler-buttons .btn-group');
+    
+    // Find the correct position based on the sprinkler ID
+    let inserted = false;
+    for (let i = 0; i < existingButtons.length; i++) {
+        let existingId = parseInt(existingButtons[i].querySelector('button').getAttribute('data-id'));
+        if (sprinklerId < existingId) {
+            existingButtons[i].before(buttonGroup);
+            inserted = true;
+            break;
+        }
+    }
+
+    // If not inserted, append it at the end
+    if (!inserted) {
+        document.getElementById('sprinkler-buttons').append(buttonGroup);
+    }
+}

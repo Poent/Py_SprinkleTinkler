@@ -16,6 +16,8 @@ def handle_exception(e):
 @sprinkler_bp.route('/sprinklers', methods=['GET'])
 def get_sprinklers():
     sprinklers = get_all_sprinklers()
+    # debug print
+    print(sprinklers)
     return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
 
 # get the sprinkler by id
