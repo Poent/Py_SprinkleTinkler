@@ -12,7 +12,9 @@ def handle_exception(e):
 
 
 
-# Route functions
+# main schedule page
+# this page will display all the schedules and allow the user to create new ones
+# this is also where watering tasks will be managed
 @schedule_bp.route('/schedule')
 def schedule():
     schedules = get_all_schedules()

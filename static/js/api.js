@@ -144,12 +144,23 @@ async function toggleSprinklerState(sprinklerId, newState) {
 // Function to load all sprinklers from the database
 async function fetchSprinklers() {
     try {
-        const response = await fetch('/sprinklers', { method: 'GET' });
+        const response = await fetch('/api/sprinklers', { method: 'GET' });
         return await response.json();
     } catch (error) {
         console.error('Error loading sprinklers:', error);
     }
 }
+
+// Function to fetch a sprinkler by ID
+async function fetchSprinklerById(sprinklerId) {
+    try {
+        const response = await fetch('/api/sprinklers/' + sprinklerId, { method: 'GET' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error loading sprinkler:', error);
+    }
+}
+
 
 // function to fetch the state of all sprinklers
 async function fetchSprinklerStates() {
@@ -178,19 +189,24 @@ async function fetchSprinklerState(id) {
 
 
 // Function to add a new sprinkler
-async function addSprinkler() {
+async function addSprinklerApi(newSprinkler) {
     try {
-        const response = await fetch('/sprinklers', { method: 'POST' });
+        const response = await fetch('/api/sprinklers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newSprinkler)
+        });
         return await response.json();
     } catch (error) {
         console.error('Error adding sprinkler:', error);
     }
 }
 
+
 // Function to delete a sprinkler by ID
-async function deleteSprinkler(sprinklerId) {
+async function deleteSprinklerApi(sprinklerId) {
     try {
-        const response = await fetch('/sprinklers/' + sprinklerId, { method: 'DELETE' });
+        const response = await fetch('/api/sprinklers/' + sprinklerId, { method: 'DELETE' });
         return await response.ok;
     } catch (error) {
         console.error('Error deleting sprinkler:', error);
@@ -214,7 +230,7 @@ async function toggleSprinklerStateApi(sprinklerId, newState) {
 // Function to edit a sprinkler's details
 async function editSprinkler(sprinklerId, newDetails) {
     try {
-        const response = await fetch('/sprinklers/' + sprinklerId, {
+        const response = await fetch('/api/sprinklers/' + sprinklerId, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newDetails)

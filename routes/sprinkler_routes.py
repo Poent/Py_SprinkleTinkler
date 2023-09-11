@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from models import db, Sprinkler
 
 sprinkler_bp = Blueprint('sprinkler', __name__)
@@ -11,9 +11,13 @@ def handle_exception(e):
     # Return a JSON response to the client with a message and the error class name
     return jsonify({'error': str(e), 'type': type(e).__name__}), 500
 
+# main sprinkler routes
+@sprinkler_bp.route('/sprinklers')
+def sprinklers():
+    return render_template('sprinklers.html')
 
-
-@sprinkler_bp.route('/sprinklers', methods=['GET'])
+# get all the sprinklers
+@sprinkler_bp.route('/api/sprinklers', methods=['GET'])
 def get_sprinklers():
     sprinklers = get_all_sprinklers()
     # debug print
@@ -21,35 +25,46 @@ def get_sprinklers():
     return jsonify([sprinkler.to_dict() for sprinkler in sprinklers])
 
 # get the sprinkler by id
-@sprinkler_bp.route('/sprinklers/<int:sprinkler_id>', methods=['GET'])
+@sprinkler_bp.route('/api/sprinklers/<int:sprinkler_id>', methods=['GET'])
 def get_sprinkler(sprinkler_id):
+    print("getting sprinkler by id: " + str(sprinkler_id))
     sprinkler = Sprinkler.query.get(sprinkler_id)
     if sprinkler is None:
         return jsonify({'error': 'Sprinkler not found'}), 404
     return jsonify(sprinkler.to_dict())
 
-
-@sprinkler_bp.route('/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
+# delete the sprinkler by id
+@sprinkler_bp.route('/api/sprinklers/<int:sprinkler_id>', methods=['DELETE'])
 def delete_sprinkler(sprinkler_id):
     delete_sprinkler_by_id(sprinkler_id)
     return jsonify({'message': f'Sprinkler {sprinkler_id} deleted successfully'}), 200
 
-@sprinkler_bp.route('/sprinklers', methods=['POST'])
+# create a new sprinkler
+@sprinkler_bp.route('/api/sprinklers', methods=['POST'])
 def add_sprinkler():
-    sprinkler = create_sprinkler()
-    return jsonify(sprinkler.to_dict()), 201
+    print("adding sprinkler with data: " + str(request.get_json()))
+    result = create_sprinkler()
+    if isinstance(result, tuple):
+        return result
+    return jsonify(result.to_dict()), 201
 
-@sprinkler_bp.route('/sprinklers/<int:sprinkler_id>', methods=['PUT'])
+
+# update a sprinkler by id
+@sprinkler_bp.route('/api/sprinklers/<int:sprinkler_id>', methods=['PUT'])
 def update_sprinkler(sprinkler_id):
     data = request.get_json(force=True)
     updated_sprinkler = update_sprinkler_details(sprinkler_id, data)
 
-    if not updated_sprinkler:
-        return jsonify({'error': 'Sprinkler not found or ID conflict'}), 404
+    if updated_sprinkler is None:
+        return jsonify({'error': 'Sprinkler not found'}), 404
+    elif updated_sprinkler == "Conflict":
+        return jsonify({'error': 'ID conflict'}), 409
 
     return jsonify(updated_sprinkler.to_dict())
 
 
+
+# helper functions
 
 def get_all_sprinklers():
     return Sprinkler.query.all()
@@ -58,13 +73,18 @@ def delete_sprinkler_by_id(sprinkler_id):
     Sprinkler.query.filter_by(id=sprinkler_id).delete()
     db.session.commit()
 
+# function to create a new sprinkler with error handling and validation
 def create_sprinkler():
-    all_ids = set(x[0] for x in db.session.query(Sprinkler.id).all())
-    new_id = next(i for i in range(1, len(all_ids) + 2) if i not in all_ids)
-    sprinkler = Sprinkler(id=new_id, name="New Sprinkler")
-    db.session.add(sprinkler)
+    data = request.get_json(force=True)
+    sprinkler = Sprinkler.query.filter_by(id=data['id']).first()
+    if sprinkler:
+        return jsonify({"error": "A sprinkler with this ID already exists"}), 409
+
+    new_sprinkler = Sprinkler(id=data['id'], name=data['name'])
+    db.session.add(new_sprinkler)
     db.session.commit()
-    return sprinkler
+    return new_sprinkler
+
 
 def update_sprinkler_details(sprinkler_id, data):
     existing_sprinkler = Sprinkler.query.get(sprinkler_id)
@@ -73,7 +93,7 @@ def update_sprinkler_details(sprinkler_id, data):
 
     conflict_sprinkler = Sprinkler.query.filter_by(id=data['id']).first()
     if conflict_sprinkler and conflict_sprinkler.id != existing_sprinkler.id:
-        return None
+        return "Conflict"
 
     existing_sprinkler.id = data['id']
     existing_sprinkler.name = data['name']

@@ -46,27 +46,31 @@
 
 
 <body class="p-3 mb-2">
-    <div class="container d-flex flex-column align-items-start">
-        <h1 class="text-center p-3 mb-2">The Sprinkle Tinkler</h1>
 
-        <button onclick="window.location.href='/schedule'" class="btn btn-primary mb-3">Go to Scheduling Page</button>
-
-        <div class="mb-3" style="width: 100%;">
-            <div class="d-flex align-items-center justify-content-center" style="gap: 1rem;">
-                <div id='calendar' class="d-flex justify-content-center mx-3" style="flex-grow: 1;">
-                    <!-- Calendar Content -->
-                </div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">The Sprinkle Tinkler</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/schedule">Scheduling</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sprinklers">Sprinklers</a>
+                    </li>
+                    <!-- Add other navigation links as needed -->
+                </ul>
             </div>
-            
-
-            <button id="add-sprinkler" class="btn btn-success mr-3" style="min-width: 120px;">Add Sprinkler</button>
-            <div id="sprinkler-buttons">
-                <!-- Sprinkler buttons in a row here -->
-            </div>
-
-
         </div>
-    </div>
+    </nav>
+   
 
 
     <script src="static/js/api.js"></script>

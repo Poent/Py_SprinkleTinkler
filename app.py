@@ -31,6 +31,7 @@ from routes.schedule_routes import schedule_bp
 from routes.watering_task_routes import watering_task_bp
 
 # register the blueprints
+# these blueprints are used to organize the routes
 app.register_blueprint(sprinkler_bp) # Register the sprinkler blueprint with the Flask app
 app.register_blueprint(schedule_bp) # Register the schedule blueprint with the Flask app
 app.register_blueprint(watering_task_bp) # Register the watering task blueprint with the Flask app
@@ -38,6 +39,10 @@ app.register_blueprint(watering_task_bp) # Register the watering task blueprint 
 # set up the routes
 @app.route('/')
 def index():
+    return render_template('index.html')
+
+@app.route('/index.html')
+def index_html():
     return render_template('index.html')
 
 @app.route('/toggle', methods=['POST'])
