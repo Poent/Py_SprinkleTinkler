@@ -57,3 +57,24 @@ class WateringTask(db.Model):
             'sprinkler_id': self.sprinkler_id,  # New field
             'task_order': self.task_order  
         }
+    
+
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)  # Reference to the Schedule model
+    run_date = db.Column(DateTime, default=datetime.utcnow)  # When the job is set to run
+    start_time = db.Column(db.Time, nullable=False)  # Start time of the job
+    run_time = db.Column(db.Integer, nullable=False)  # Duration for which each sprinkler will run (in seconds/minutes)
+    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)  # Reference to the Sprinkler model
+    status = db.Column(db.String(50), nullable=True)  # Status of the job (e.g., pending, running, skipped, completed)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'schedule_id': self.schedule_id,
+            'run_date': self.run_date.isoformat(),
+            'start_time': self.start_time.strftime('%H:%M'),
+            'run_time': self.run_time,
+            'sprinkler_id': self.sprinkler_id,
+            'status': self.status
+        }

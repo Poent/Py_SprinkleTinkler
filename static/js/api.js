@@ -1,5 +1,10 @@
+// trying to consolidate all the api calls into one file
+// these are used in multiple places so it makes sense to have them in one place
+
+// TODO: convert all the ajax calls to use fetch instead
+
+// get all the schedules from the database
 function fetchSchedules() {
-    // Fetch schedules from the database
     return $.ajax({
         url: '/schedules',
         type: 'GET'
@@ -8,7 +13,6 @@ function fetchSchedules() {
 
 // function to fetch the schedule by id
 function fetchScheduleById(scheduleId) {
-    // Fetch schedule from the database
     return $.ajax({
         url: '/schedules/' + scheduleId,
         type: 'GET'
@@ -114,9 +118,6 @@ async function deleteWateringTasks(scheduleId) {
         console.error('Error deleting watering tasks:', error);
     }
 }
-
-
-
 
 
 // function to toggle the state of a sprinkler. Called when a sprinkler button is clicked
