@@ -6,6 +6,8 @@ This project is primarily a learning experience and a fun endeavor, and it's wor
 
 ## Project Structure
 
+[NEEDS UPDATED]
+
 The project consists of several Python and HTML files:
 
 - `relay.py`: This file contains the `Relay` class, which is used to control the GPIO pins on the Raspberry Pi. Each instance of the class represents a single relay, which can be turned on or off.

@@ -60,24 +60,36 @@ function clearTaskList() {
 // Tasks are loaded into the list as list items and shown in the modal
 async function loadTasks(scheduleId) {
     clearTaskList();
-
-    try {
-        const taskData = await fetchTaskData(scheduleId);
-
-        taskData.forEach(task => {
-            const sprinklerName = getSprinklerName(task.sprinkler_id);
-            const taskListItem = createTaskListItem(task, sprinklerName);
-            document.getElementById('wateringTasksList').appendChild(taskListItem);
-        });
-
+    
+    // if the schedule id is undefined, then we are creating a new schedule
+    if (scheduleId == undefined) {
         initializeSortableList();
-    } catch (error) {
-        console.error('Error in loadTasks:', error);
     }
+    // else we are editing an existing schedule
+    else {
+        try {
+            const taskData = await fetchTaskData(scheduleId);
+    
+            taskData.forEach(task => {
+                const sprinklerName = getSprinklerName(task.sprinkler_id);
+                const taskListItem = createTaskListItem(task, sprinklerName);
+                document.getElementById('wateringTasksList').appendChild(taskListItem);
+            });
+    
+            initializeSortableList();
+        } catch (error) {
+            console.error('Error in loadTasks:', error);
+        }
+    }
+
 }
 
 
 function getWateringTasks(scheduleId) {
+
+    // debug
+    console.log("Getting watering tasks");
+
     let tasks = [];
     let taskList = document.getElementById("wateringTasksList");
     let taskItems = taskList.getElementsByClassName("sortable-item");

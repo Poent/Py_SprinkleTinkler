@@ -1,9 +1,14 @@
+# This is the main file for the sprinkler controller app.
+# It contains the core routes for the app and the main function to run the flask app.
+# it also sets up the database and imports the blueprints for the routes.
+# 
+# See the README.md file for more information about the app.
+
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 from sqlalchemy import DateTime
-
 
 #import relay module
 # note that there are two versions of this module
@@ -45,6 +50,11 @@ def index():
 def index_html():
     return render_template('index.html')
 
+
+# =================== Relay routes ===================
+# We will eventually move all of the relay routes to a separate file
+
+# toggle a relay by id
 @app.route('/toggle', methods=['POST'])
 def toggle_relay():
     print("toggle relay" + str(request.get_json()))
@@ -67,16 +77,9 @@ def get_relay_state(id):
     state = relay.get_channel_status(id)
     return jsonify({'state': state})
 
-@app.route('/get-events', methods=['GET'])
-def get_events():
-    # Fetch your events from your database or wherever they're stored
-    events = [
-        {
-            'title': 'All Day Event',
-            'start': '2023-07-01'
-        }
-    ]
-    return jsonify({'events': events})
+
+# =================== End Relay routes ===================
+
 
 
 # main function to run the app
@@ -88,6 +91,7 @@ if __name__ == '__main__':
     #set the state of the relays in the database to off
     for i in range(1, 17):
         relay.control_channel(i, False)
+    
 
     # run the flask app    
     app.run(host='0.0.0.0', port=8080)

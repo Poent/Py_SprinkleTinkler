@@ -80,7 +80,7 @@ function createScheduleRow(schedule) {
     deleteBtn.setAttribute('data-id', schedule.id);
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = function() {
-        deleteScheduleAjax(schedule.id);
+        deleteSchedule(schedule.id);
     };
 
     actionCell.appendChild(editBtn);
@@ -110,8 +110,8 @@ function editSchedule(scheduleId) {
     // Update the header of the modal with the scheduleId
     document.querySelector('.schedule-modal-header').innerText = "Edit Schedule " + scheduleId;
 
-    // if scheduleId is 0, then this is a new schedule and we need to clear the form
-    if (scheduleId == 0) {
+    // if scheduleId is undefined, then we are creating a new schedule
+    if (scheduleId == undefined) {
         // Clear the form
         document.getElementById("name").value = "";
         document.getElementById("frequency").value = "daily";
@@ -119,6 +119,7 @@ function editSchedule(scheduleId) {
         document.getElementById("customDays").style.display = 'none';
         document.getElementById("wateringTasksList").innerHTML = '';
         document.getElementById("edit-schedule-btn").setAttribute("data-schedule-id", 0);
+        loadTasks();
         
     } 
     else {
@@ -128,11 +129,13 @@ function editSchedule(scheduleId) {
         .then(schedule => {
             populateModalForm(schedule);
         });
+
+        // also Load the tasks for the schedule
+        loadTasks(scheduleId);
     }
     
     // Set the schedule-id on the save button
     document.getElementById("save-schedule-button").setAttribute("data-id", scheduleId);
-    loadTasks(scheduleId);
 
     // Display the modal
     $('#editScheduleModal').modal('show');
@@ -179,14 +182,19 @@ function populateModalForm(data) {
 // function to save the schedule to the database
 // called when the save button is clicked on the modal
 async function saveSchedule() {
-    let scheduleId = event.target.getAttribute("data-id");
+
+    // debug to console
+    console.log("Saving schedule");
+
+    let scheduleId = event.target.getAttribute("data-schedule-id");
 
     // Get form data and tasks
     let requestData = getScheduleFormData();
     let tasks = getWateringTasks(scheduleId);
 
     try {
-        if (scheduleId == 0) {
+        if (scheduleId == undefined || scheduleId == 0) {
+            console.log("Creating schedule");
             let data = await createSchedule(requestData);
             console.log('Created schedule:', data);
             await saveWateringTasks(tasks, data.id);

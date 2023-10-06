@@ -82,28 +82,26 @@ async function fetchTaskData(scheduleId) {
     }
 }
 
-// Save watering tasks to the database for the specified scheduleId
-function saveWateringTasks(tasks, scheduleId) {
+async function saveWateringTasks(tasks, scheduleId) {
+    try {
+        console.log("Saving tasks: " + JSON.stringify(tasks));
+        console.log("scheduleId: " + scheduleId);
 
-    //debug
-    console.log("Saving tasks: " + JSON.stringify(tasks));
-    console.log("scheduleId: " + scheduleId);
-
-    $.ajax({
-        url: "/watering_tasks/" + scheduleId,
-        method: "POST",
-        data: JSON.stringify(tasks),
-        contentType: "application/json",
-        success: function(response) {
-            console.log(response);
-            alert('Tasks saved successfully!');
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-            alert('Failed to save tasks. Please try again.');
-        }
-    });
+        const response = await fetch("/watering_tasks/" + scheduleId, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tasks)
+        });
+        
+        const data = await response.json();
+        console.log(data);
+        alert('Tasks saved successfully!');
+    } catch (error) {
+        console.error('Error saving watering tasks:', error);
+        alert('Failed to save tasks. Please try again.');
+    }
 }
+
 
 
 
