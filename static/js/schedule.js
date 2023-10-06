@@ -134,8 +134,9 @@ function editSchedule(scheduleId) {
         loadTasks(scheduleId);
     }
     
+    console.log("setting save btn scheduleId: " + scheduleId);
     // Set the schedule-id on the save button
-    document.getElementById("save-schedule-button").setAttribute("data-id", scheduleId);
+    document.getElementById("save-schedule-button").setAttribute("data-schedule-id", scheduleId);
 
     // Display the modal
     $('#editScheduleModal').modal('show');

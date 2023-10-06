@@ -4,20 +4,26 @@
 // TODO: convert all the ajax calls to use fetch instead
 
 // get all the schedules from the database
-function fetchSchedules() {
-    return $.ajax({
-        url: '/schedules',
-        type: 'GET'
-    });
+async function fetchSchedules() {
+    try {
+        const response = await fetch('/schedules', { method: 'GET' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching schedules:', error);
+    }
 }
 
+
 // function to fetch the schedule by id
-function fetchScheduleById(scheduleId) {
-    return $.ajax({
-        url: '/schedules/' + scheduleId,
-        type: 'GET'
-    });
+async function fetchScheduleById(scheduleId) {
+    try {
+        const response = await fetch('/schedules/' + scheduleId, { method: 'GET' });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching schedule by ID:', error);
+    }
 }
+
 
 
 // function to create a new schedule
@@ -54,22 +60,18 @@ async function updateSchedule(scheduleId, requestData) {
 
 
 // function to delete the schedule by id using ajax and reload the schedules table
-function deleteScheduleAjax(scheduleId) {
-
-    // Make DELETE request
-    $.ajax({
-        url: "/schedules/" + scheduleId,
-        method: "DELETE",
-        success: function(response) {
-            console.log(response);
-            loadSchedules();
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-            alert('Failed to delete schedule. Please try again.');
-        }
-    });
+async function deleteSchedule(scheduleId) {
+    try {
+        const response = await fetch("/schedules/" + scheduleId, { method: "DELETE" });
+        const data = await response.json();
+        console.log(data);
+        loadSchedules();
+    } catch (error) {
+        console.error('Error deleting schedule:', error);
+        alert('Failed to delete schedule. Please try again.');
+    }
 }
+
 
 
 // Function to fetch task data from the server
@@ -82,6 +84,7 @@ async function fetchTaskData(scheduleId) {
     }
 }
 
+// save the watering tasks to the database
 async function saveWateringTasks(tasks, scheduleId) {
     try {
         console.log("Saving tasks: " + JSON.stringify(tasks));
@@ -101,6 +104,7 @@ async function saveWateringTasks(tasks, scheduleId) {
         alert('Failed to save tasks. Please try again.');
     }
 }
+
 
 
 
