@@ -20,7 +20,7 @@ from sqlalchemy import DateTime
 import relay_dummy as relay
 
 
-from models import db, Schedule, Sprinkler, WateringTask
+from models import db, Schedule, Sprinkler, WateringTask, Job, JobLog
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///schedules.db'

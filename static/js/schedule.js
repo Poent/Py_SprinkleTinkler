@@ -112,6 +112,8 @@ function editSchedule(scheduleId) {
 
     // if scheduleId is undefined, then we are creating a new schedule
     if (scheduleId == undefined) {
+        scheduleId = 0;
+
         // Clear the form
         document.getElementById("name").value = "";
         document.getElementById("frequency").value = "daily";
