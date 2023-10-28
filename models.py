@@ -15,6 +15,7 @@ class Schedule(db.Model):
     next_run = db.Column(DateTime, nullable=True)  # New field
     custom_days = db.Column(db.String(13), nullable=True) # Example value: 'MTWTFSS', 'M-W-F--'
     watering_tasks = db.relationship('WateringTask', backref='schedule', lazy=True, cascade='all,delete-orphan')
+    jobs = db.relationship('Job', backref='schedule', lazy=True, cascade='all,delete-orphan')
 
     def to_dict(self):
         return {
@@ -45,8 +46,8 @@ class Sprinkler(db.Model):
 class WateringTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     duration = db.Column(db.Integer, nullable=False)
-    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id', ondelete='CASCADE'), nullable=False)
-    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)  # New field
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id', ondelete='CASCADE', name='fk_wateringtask_schedule'), nullable=False)
+    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id', name='fk_wateringtask_sprinkler'), nullable=False)  # New field
     task_order = db.Column(db.Integer, nullable=False)
 
     def to_dict(self):
@@ -60,30 +61,30 @@ class WateringTask(db.Model):
     
 
 class Job(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)  # Reference to the Schedule model
+    id = db.Column(db.Integer, primary_key=True) # Unique ID for each job based on the watering task 
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id', ondelete='CASCADE', name='fk_job_schedule'), nullable=False)  # Reference to the Schedule model
     run_datetime = db.Column(DateTime, default=datetime.utcnow)  # When the job is set to run
     duration = db.Column(db.Integer, nullable=False)  # Duration for which each sprinkler will run (in seconds/minutes)
-    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)  # Reference to the Sprinkler model
+    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id', ondelete='CASCADE', name='fk_job_sprinkler'), nullable=False)  # Reference to the Sprinkler model
     status = db.Column(db.String(50), nullable=True)  # Status of the job (e.g., pending, running, skipped, completed)
 
     def to_dict(self):
         return {
             'id': self.id,
             'schedule_id': self.schedule_id,
-            'run_datetime': self.run_date.isoformat(),
-            'duration': self.run_time,
+            'run_datetime': self.run_datetime.isoformat(),
+            'duration': self.duration,
             'sprinkler_id': self.sprinkler_id,
             'status': self.status
         }
 
 class JobLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id'), nullable=False)
+    schedule_id = db.Column(db.Integer, db.ForeignKey('schedule.id', name='fk_joblog_schedule'), nullable=False)
     run_datetime = db.Column(DateTime, default=datetime.utcnow)
     duration = db.Column(db.Integer, nullable=False)
     completed_time = db.Column(DateTime, nullable=True)  # Time the job actually completed
-    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id'), nullable=False)
+    sprinkler_id = db.Column(db.Integer, db.ForeignKey('sprinkler.id', name='fk_joblog_sprinkler'), nullable=False)
     status = db.Column(db.String(50), nullable=True)  # Status (e.g., completed, interrupted, error)
     error_message = db.Column(db.String(255), nullable=True)  # Any error messages or notes related to execution
 

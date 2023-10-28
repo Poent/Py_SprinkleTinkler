@@ -1,8 +1,8 @@
-"""adjusting models
+"""adjusting the job and schedule relationships
 
-Revision ID: 0a80154014b6
+Revision ID: d39e88255d38
 Revises: 
-Create Date: 2023-10-22 22:40:56.600076
+Create Date: 2023-10-28 11:48:47.971363
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0a80154014b6'
+revision = 'd39e88255d38'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -41,22 +41,21 @@ def upgrade():
     sa.Column('duration', sa.Integer(), nullable=False),
     sa.Column('sprinkler_id', sa.Integer(), nullable=False),
     sa.Column('status', sa.String(length=50), nullable=True),
-    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], ),
-    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], name='fk_job_schedule', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], name='fk_job_sprinkler', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('job_log',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('schedule_id', sa.Integer(), nullable=False),
-    sa.Column('run_date', sa.DateTime(), nullable=True),
-    sa.Column('start_time', sa.Time(), nullable=False),
-    sa.Column('run_time', sa.Integer(), nullable=False),
+    sa.Column('run_datetime', sa.DateTime(), nullable=True),
+    sa.Column('duration', sa.Integer(), nullable=False),
     sa.Column('completed_time', sa.DateTime(), nullable=True),
     sa.Column('sprinkler_id', sa.Integer(), nullable=False),
     sa.Column('status', sa.String(length=50), nullable=True),
     sa.Column('error_message', sa.String(length=255), nullable=True),
-    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], ),
-    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], name='fk_joblog_schedule'),
+    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], name='fk_joblog_sprinkler'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('watering_task',
@@ -65,8 +64,8 @@ def upgrade():
     sa.Column('schedule_id', sa.Integer(), nullable=False),
     sa.Column('sprinkler_id', sa.Integer(), nullable=False),
     sa.Column('task_order', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], ),
+    sa.ForeignKeyConstraint(['schedule_id'], ['schedule.id'], name='fk_wateringtask_schedule', ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['sprinkler_id'], ['sprinkler.id'], name='fk_wateringtask_sprinkler'),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
