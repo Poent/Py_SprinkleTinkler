@@ -35,13 +35,14 @@ class DatabaseManager:
     def load_jobs(self):
         return Job.query.all()
     
-
+# Helper function to calculate the next run date based on the schedule's frequency
 def calculate_run_date(schedule, now):
     # Helper function to determine if today is one of the custom days
     def is_today_custom(custom_days_str, day):
         custom_days_list = [day.strip().lower() for day in custom_days_str.split(',')]
         return day.strftime('%A').lower() in custom_days_list
 
+    # Helper function to determine the next custom day
     def next_custom_day(custom_days_str, start):
         custom_days_list = [day.strip().lower() for day in custom_days_str.split(',')]
         day_mapping = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -138,10 +139,12 @@ def populate_jobs(db_manager):
                 job.status = 'scheduled' # Set the status of the job (e.g., pending, running, skipped, completed)
                 db.session.add(job) # Add the job to the database
             else:
-                # You can update fields if needed. Decide based on your requirements.
-                # For now, we only update the run_date and start_time
+                # Update the existing job
                 existing_job.run_datetime = run_datetime
-            
+                existing_job.duration = task.duration
+                existing_job.sprinkler_id = task.sprinkler_id
+                existing_job.schedule_id = schedule.id
+
             # Accumulate duration for the next task's start time
             accumulated_duration += timedelta(minutes=task.duration)
 
