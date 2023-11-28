@@ -2,7 +2,7 @@
 # such as populating the jobs table in the database. This will also execute
 # the jobs when they are due to run.
 
-
+import time # For sleeping
 from flask import Flask
 from models import db, Job, JobLog, WateringTask, Sprinkler, Schedule
 from datetime import datetime, timedelta
@@ -69,6 +69,10 @@ def calculate_run_date(schedule, now):
             start_date += timedelta(days=1)
         return start_date
 
+    #condition 3: Determine the next run day based on the "frequency" when it's daily
+    elif schedule.frequency == 'daily':
+        return start_date
+
     elif schedule.frequency == 'odd':
         while start_date.day % 2 == 0:  # Odd day
             start_date += timedelta(days=1)
@@ -82,15 +86,14 @@ def calculate_run_date(schedule, now):
     return None  # Default return, should not reach here for valid schedules
 
 
-def populate_jobs(db_manager):
+def update_jobs(db_manager):
     Sprinklers, watering_tasks, schedules = db_manager.load_all_data()
     now = datetime.today()
 
     print(f'Today is {now.date()}')
     print(f'Current time is {now.time()}')
-
-    print('On start - Populating jobs...')
-
+    print(f'Populating jobs...')
+    print('\n')
     for schedule in schedules:
 
         print(f'processing schedule: {schedule.id}' + f' {schedule.name}')
@@ -130,6 +133,7 @@ def populate_jobs(db_manager):
 
             # If the job doesn't exist, create a new one
             if not existing_job:  
+                print(f'job {task.id} does not exist. Creating a new job')
                 job = Job() # Create a new job
                 job.id = task.id # Use the task id as the job id
                 job.schedule_id = schedule.id # Set the schedule_id
@@ -138,21 +142,88 @@ def populate_jobs(db_manager):
                 job.duration = task.duration # Set the duration of the job
                 job.status = 'scheduled' # Set the status of the job (e.g., pending, running, skipped, completed)
                 db.session.add(job) # Add the job to the database
+
+            # if the job exists and is scheduled to run in the future, then we need to update the job with the new run_datetime
+            # this is a catch all for any other scenarios that may have been missed and simply assumes that the job needs to be updated
             else:
-                # Update the existing job
+                print(f'job {existing_job.id} exists. Updating the job')
                 existing_job.run_datetime = run_datetime
                 existing_job.duration = task.duration
                 existing_job.sprinkler_id = task.sprinkler_id
                 existing_job.schedule_id = schedule.id
+                existing_job.status = 'scheduled'
 
             # Accumulate duration for the next task's start time
             accumulated_duration += timedelta(minutes=task.duration)
 
     db.session.commit()
 
+if __name__ == '__main__':
+    with app.app_context():
+        db_manager = DatabaseManager()
+        
+        update_jobs(db_manager)
 
-with app.app_context():
-    db_manager = DatabaseManager()
+        while True:
+            print('\n')
+            print(f'current time: {datetime.now()}')
+            print(f'Checking for jobs to run...')
+            # Get all jobs that are scheduled to run in the next 5 seconds
+            jobs = Job.query.filter(Job.run_datetime <= datetime.now() + timedelta(seconds=5), Job.status == 'scheduled').all()
+            print(f'Found {len(jobs)} jobs to run')
+
+            # get all the jobs that are running
+            running_jobs = Job.query.filter(Job.status == 'running').all()
+            print(f'Found {len(running_jobs)} jobs running')
+
+            # Loop through the jobs and execute them
+            for job in jobs:
+                # Update the job status to "running"
+                job.status = 'running'
+                db.session.commit()
+
+                # Execute the job
+                sprinkler = Sprinkler.query.get(job.sprinkler_id)
+                print(f'Running job {job.id} on sprinkler {sprinkler.name} for {job.duration} minutes...')
+                print('\n')
+
+            # check for running jobs that have completed
+            for running_job in running_jobs:
+
+                #debug values
+                print(f'running_job.run_datetime: {running_job.run_datetime}')
+                print(f'running_job.duration: {running_job.duration}')
+                print(f'completion time: {running_job.run_datetime + timedelta(minutes=running_job.duration)}')
+                print(f'datetime.now(): {datetime.now()}')
+
+                # Update the job status to "completed" once the run time has elapsed. Measured based off the delta between the run_datetime and the current time, and the duration of the job
+                if datetime.now() >= running_job.run_datetime + timedelta(minutes=running_job.duration):
+                    print(f'Job {running_job.id} has completed')
+                    running_job.status = 'completed'
+                    db.session.commit()
+
+                    # Log the job
+                    job_log = JobLog()
+                    job_log.job_id = running_job.id
+                    job_log.sprinkler_id = running_job.sprinkler_id
+                    job_log.schedule_id = running_job.schedule_id
+                    job_log.start_datetime = running_job.run_datetime
+                    job_log.end_datetime = datetime.now()
+                    job_log.duration = running_job.duration
+                    job_log.status = 'completed'
+                    db.session.add(job_log)
+                    db.session.commit()
+
+                    # remove the job from the database
+                    db.session.delete(running_job)
+                    db.session.commit()
+            
+
+            # Sleep for 5 seconds
+            print(f'Sleeping for 5 seconds...')
+
+            time.sleep(5)
+            
+
     
-    populate_jobs(db_manager)
  
